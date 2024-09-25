@@ -1,0 +1,323 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+      "title": "YouPin API",
+      "description": "This is API-docs of backend server of YouPin team.",
+      "version": "1.0.0"
+    },
+    "servers": [
+      {
+        "url": "https://api.youpin.ru/"
+      }
+    ],
+    "paths": {
+      "/is_authorized": {
+        "get": {
+          "tags": ["Authentication"],
+          "summary": "Get auth status",
+          "parameters": [
+            {
+              "name": "Cookie",
+              "in": "header",
+              "description": "session-token",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "default": "session-token="
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successfully get settings",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/definitions/entity.UserResponse"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Bad authorization",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/definitions/err.ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Bad server response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/definitions/err.ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/login": {
+        "post": {
+          "tags": ["Authentication"],
+          "summary": "Authenticate and receive a session token",
+          "description": "Allows users to log in by providing valid credentials (username and password). Returns a session token on success.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "username": {
+                      "type": "string",
+                      "example": "user123",
+                      "description": "Username login"
+                    },
+                    "password": {
+                      "type": "string",
+                      "example": "password123",
+                      "description": "Password for authentication"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successful authentication, session cookie returned",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/definitions/entity.SessionCookie"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Invalid username or password",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/definitions/err.ErrorResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Missing or invalid request body",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/definitions/err.ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/register": {
+        "post": {
+          "tags": ["Authentication"],
+          "summary": "Register new user",
+          "description": "Allows users to register by providing valid credentials (username, email, password).",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["user_nickname", "user_email", "user_password"],
+                  "properties": {
+                    "user_nickname": {
+                      "type": "string",
+                      "example": "user123",
+                      "description": "User login"
+                    },
+                    "user_email": {
+                      "type": "string",
+                      "example": "user@user.com",
+                      "description": "User email"
+                    },
+                    "user_password": {
+                      "type": "string",
+                      "example": "password123",
+                      "description": "Password for registration"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Successful registration",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/definitions/entity.UserRegistration"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid username or email",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/definitions/err.ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Missing or invalid request body",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/definitions/err.ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/feed": {
+        "get": {
+          "tags": ["Content"],
+          "summary": "Resolve pins feed",
+          "description": "Returns an array of objects with image data, including the number of likes and comments.",
+          "parameters": [
+            {
+              "name": "limit",
+              "in": "query",
+              "description": "Max pins on page",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 30
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful answer. Returns map of pins with number of likes and comments",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "totalImages": {
+                        "type": "integer",
+                        "description": "Total number of pins"
+                      },
+                      "pins": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "pin_id": {
+                              "type": "string"
+                            },
+                            "pin_url": {
+                              "type": "string",
+                              "description": "Pin's URL"
+                            },
+                            "pin_likes": {
+                              "type": "integer",
+                              "description": "Number of likes"
+                            },
+                            "pin_comments": {
+                              "type": "integer",
+                              "description": "Number of comments"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Missing or invalid request body",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/definitions/err.ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/definitions/err.ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "definitions": {
+      "entity.UserResponse": {
+        "type": "object",
+        "properties": {
+          "use_id": {
+            "type": "integer"
+          },
+          "user_name": {
+            "type": "string"
+          },
+          "user_avatar_url": {
+            "type": "string"
+          }
+        }
+      },
+      "entity.UserRegistration": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Registration successful. Please confirm your email."
+          },
+          "userId": {
+            "type": "string",
+            "example": "12345"
+          }
+        }
+      },
+      "entity.SessionCookie": {
+        "type": "object",
+        "properties": {
+          "session-cookie": {
+            "type": "string",
+            "example": "eadsJJAJWNDKJA21ASKldasdawADasd"
+          }
+        }
+      },
+      "err.ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+  
