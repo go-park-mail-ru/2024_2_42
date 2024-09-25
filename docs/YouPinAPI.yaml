@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: YouPin API
-  description: "This is API-docs of backend server of YouPin team."
+  description: "This is API-docs of backend server of Harmonica team."
   version: "1.0.0"
 servers:
 - url: https://api.youpin.ru/
@@ -83,13 +83,48 @@ paths:
             application/json:
               schema:
                 $ref: "#/defenitions/err.ErrorResponse"
+                
+  /logout:
+    get:
+      tags: 
+        - Authentication
+      summary: "User logout"
+      description: "Removing a valid session token"
+      parameters: 
+        - name: "Cookie"
+          in: header
+          description: "session-token"
+          required: true
+          schema:
+            type: string
+            default: "session-token="
+      responses:
+        '200':
+          description: "Successful logout. Cookie went bad"
+          content:
+            application/json:
+              schema:
+                $ref: "#/defenitions/entity.SessionCookieRemove"
+        '403':
+          description: "Session tocken is not allowed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/defenitions/err.ErrorResponse"
+                
+        '500':
+          description: "Bad server response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/defenitions/err.ErrorResponse"
   
   /register:
     post:
       tags:
         - Authentication
       summary: "Registrate new user"
-      description: "Allows users to log in by providing valid credentials (username and password). Returns a session cookie on success."
+      description: "Allows users to log in by providing valid credentials (username and password). Returns a session token on success."
       requestBody:
         required: true
         content:
@@ -221,6 +256,13 @@ defenitions:
       session-cookie:
         type: string
         example: "eadsJJAJWNDKJA21ASKldasdawADasd"
+        
+  entity.SessionCookieRemove:
+    type: object
+    properties:
+      message:
+        type: string
+        example: "Cookie went bad"
   
   err.ErrorResponse:
     type: object
