@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"youpin/config"
+	"youpin/configs"
 	"youpin/handlers"
 
 	"github.com/gorilla/mux"
 )
 
 func Router() {
-	routerParams := config.GetInternalParams()
+	routerParams := configs.NewInternalParams()
 
 	router := mux.NewRouter()
 
