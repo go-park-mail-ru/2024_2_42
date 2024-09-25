@@ -122,6 +122,57 @@
           }
         }
       },
+      "/logout": {
+        "get": {
+          "tags": ["Authentication"],
+          "summary": "User logout",
+          "description": "Removing a valid session token",
+          "parameters": [
+            {
+              "name": "Cookie",
+              "in": "header",
+              "description": "session-token",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "default": "session-token="
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful logout. Cookie went bad",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/defenitions/entity.SessionCookieRemove"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Session tocken is not allowed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/definitions/err.ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Bad server response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/definitions/err.ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "/register": {
         "post": {
           "tags": ["Authentication"],
@@ -304,6 +355,15 @@
           "session-cookie": {
             "type": "string",
             "example": "eadsJJAJWNDKJA21ASKldasdawADasd"
+          }
+        }
+      },
+      "entity.SessionCookieRemove": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Cookie went bad"
           }
         }
       },
