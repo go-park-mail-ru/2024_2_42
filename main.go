@@ -1,6 +1,8 @@
 package main
 
-import "youpin/router"
+import (
+	"youpin/internal/router"
+)
 
 func main() {
 	router.Router()
