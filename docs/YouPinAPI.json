@@ -90,7 +90,7 @@
           },
           "responses": {
             "200": {
-              "description": "Successful authentication, session token returned",
+              "description": "Successful authentication, session cookie returned",
               "content": {
                 "application/json": {
                   "schema": {

@@ -89,7 +89,7 @@ paths:
       tags:
         - Authentication
       summary: "Registrate new user"
-      description: "Allows users to log in by providing valid credentials (username and password). Returns a session token on success."
+      description: "Allows users to log in by providing valid credentials (username and password). Returns a session cookie on success."
       requestBody:
         required: true
         content:
