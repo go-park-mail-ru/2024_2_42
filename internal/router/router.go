@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 	"youpin/configs"
-	"youpin/handlers"
+	"youpin/internal/handlers"
 
 	"github.com/gorilla/mux"
 )
