@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"fmt"
+	"html"
+	"time"
+)
 
 type Pin struct {
 	PinID        uint64    `json:"pin_id"`
@@ -13,12 +17,27 @@ type Pin struct {
 	Commentaries []Comment `json:"commentaries"`
 	Likes        []Like    `json:"likes"`
 	CreationTime time.Time `json:"creation_time"`
+	UpdateTime   time.Time `json:"update_time"`
 }
 
-func (p Pin) TitleValid() bool {
+func (p *Pin) Sanitize() {
+	p.Title = html.EscapeString(p.Title)
+	p.Description = html.EscapeString(p.Description)
+	p.MediaUrl = html.EscapeString(p.MediaUrl)
+	p.RelatedLink = html.EscapeString(p.RelatedLink)
+}
+
+func (p Pin) Valid() error {
+	if p.titleValid() && p.descriptionValid() {
+		return nil
+	}
+	return fmt.Errorf("invalid pin data")
+}
+
+func (p Pin) titleValid() bool {
 	return len(p.Title) > 0
 }
 
-func (p Pin) DescriptionValid() bool {
+func (p Pin) descriptionValid() bool {
 	return len(p.Description) > 0
 }

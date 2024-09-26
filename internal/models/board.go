@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"fmt"
+	"html"
+	"time"
+)
 
 type Board struct {
 	BoardID       uint64    `json:"board_id"`
@@ -12,4 +16,25 @@ type Board struct {
 	Sections      []Section `json:"sections"`
 	Collaborators []User    `json:"collaborators"`
 	CreationTime  time.Time `json:"creation_time"`
+	UpdateTime    time.Time `json:"update_time"`
+}
+
+func (b *Board) Sanitize() {
+	b.Name = html.EscapeString(b.Name)
+	b.Description = html.EscapeString(b.Description)
+}
+
+func (b Board) Valid() error {
+	if b.nameValid() && b.descriptionValid() {
+		return nil
+	}
+	return fmt.Errorf("invalid board data")
+}
+
+func (b Board) nameValid() bool {
+	return len(b.Name) > 0
+}
+
+func (b Board) descriptionValid() bool {
+	return len(b.Description) > 0
 }

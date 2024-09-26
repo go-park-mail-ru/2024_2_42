@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"fmt"
+	"html"
+	"time"
+)
 
 type Section struct {
 	SectionID    uint64    `json:"section_id"`
@@ -8,5 +12,26 @@ type Section struct {
 	Name         string    `json:"name"`
 	Description  string    `json:"description"`
 	Pins         []Pin     `json:"pins"`
-	CreationTime time.Time `json:"CreationTime"`
+	CreationTime time.Time `json:"creation_time"`
+	UpdateTime   time.Time `json:"update_time"`
+}
+
+func (s *Section) Sanitize() {
+	s.Name = html.EscapeString(s.Name)
+	s.Description = html.EscapeString(s.Description)
+}
+
+func (s Section) Valid() error {
+	if s.nameValid() && s.descriptionValid() {
+		return nil
+	}
+	return fmt.Errorf("invalid section data")
+}
+
+func (s Section) nameValid() bool {
+	return len(s.Name) > 0
+}
+
+func (s Section) descriptionValid() bool {
+	return len(s.Description) > 0
 }

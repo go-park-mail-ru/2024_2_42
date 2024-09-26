@@ -1,6 +1,13 @@
 package models
 
-import "time"
+import (
+	"fmt"
+	"html"
+	"net/mail"
+	"time"
+
+	"youpin/pkg/utils"
+)
 
 const (
 	minUserNameLength = 4
@@ -21,28 +28,35 @@ type User struct {
 	Followers    []User    `json:"followers"`
 	Following    []User    `json:"following"`
 	Boards       []Board   `json:"boards"`
-	SignedUpTime time.Time `json:"created_at"`
+	CreationTime time.Time `json:"creation_time"`
+	UpdateTime   time.Time `json:"update_time"`
 }
 
-func (u User) DataValid() bool {
-	return len(u.UserName) > minUserNameLength &&
+func (u *User) Sanitize() {
+	u.UserName = html.EscapeString(u.UserName)
+	u.NickName = html.EscapeString(u.NickName)
+	u.Email = html.EscapeString(u.Email)
+	u.Password = html.EscapeString(u.Password)
+	u.Gender = html.EscapeString(u.Email)
+	u.AvatarUrl = html.EscapeString(u.AvatarUrl)
+}
+
+func (u User) Valid() error {
+	if len(u.UserName) > minUserNameLength &&
 		len(u.NickName) > minNickNameLength &&
-		len(u.Password) > minPasswordLength
+		len(u.Password) > minPasswordLength &&
+		u.BirthTime.Before(time.Now()) &&
+		u.emailValid() {
+		return nil
+	}
+	return fmt.Errorf("invalid user data")
+}
+
+func (u User) emailValid() bool {
+	_, err := mail.ParseAddress(u.Email)
+	return err == nil
 }
 
 func (u User) AgeRestricted() bool {
-	return yearsBetween(u.BirthTime, time.Now()) < restrictionAge
-}
-
-func yearsBetween(t1, t2 time.Time) int {
-	if t1.Location() != t2.Location() {
-		t2 = t2.In(t1.Location())
-	}
-	if t1.After(t2) {
-		t1, t2 = t2, t1
-	}
-	y1, _, _ := t1.Date()
-	y2, _, _ := t2.Date()
-
-	return int(y2 - y1)
+	return utils.YearsBetween(u.BirthTime, time.Now()) < restrictionAge
 }
