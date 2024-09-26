@@ -1,9 +1,9 @@
 package models
 
 import (
-	"fmt"
 	"html"
 	"time"
+	"youpin/internal/errors"
 )
 
 type Board struct {
@@ -28,7 +28,7 @@ func (b Board) Valid() error {
 	if b.nameValid() && b.descriptionValid() {
 		return nil
 	}
-	return fmt.Errorf("invalid board data")
+	return errors.ErrorBoardDataInvalid
 }
 
 func (b Board) nameValid() bool {

@@ -1,9 +1,9 @@
 package models
 
 import (
-	"fmt"
 	"html"
 	"time"
+	"youpin/internal/errors"
 )
 
 type Section struct {
@@ -25,7 +25,7 @@ func (s Section) Valid() error {
 	if s.nameValid() && s.descriptionValid() {
 		return nil
 	}
-	return fmt.Errorf("invalid section data")
+	return errors.ErrorSectionDataInvalid
 }
 
 func (s Section) nameValid() bool {
