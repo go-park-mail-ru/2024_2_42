@@ -1,12 +1,20 @@
 package handlers
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
 	"youpin/internal/errors"
 	"youpin/internal/models"
+	"youpin/internal/models/response"
+)
+
+const (
+	respSignUpSuccessMesssage = "Registration successful. Please confirm your email"
 )
 
 var (
@@ -32,7 +40,7 @@ var (
 	}
 )
 
-func userIsAlreadyRegistered(u models.User) error {
+func userIsAlreadySignedUP(u models.User) error {
 	for _, user := range registeredUsers {
 		if user.Email == u.Email {
 			return errors.ErrorUserAlreadyRegistered
@@ -43,22 +51,30 @@ func userIsAlreadyRegistered(u models.User) error {
 }
 
 func SignUp(w http.ResponseWriter, r *http.Request) {
-	userName := r.FormValue("user_name")
-	email := r.FormValue("email")
-	password := r.FormValue("password")
+	var user models.User
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		errors.SendErrorResponse(w, errors.ErrorInfo{
+			General: err, Internal: errors.ErrorInvalidOrMissingRequestBody,
+		})
+		return
+	}
 
-	user := models.NewUser(nextUserID, userName, email, password)
 	user.Sanitize()
 
 	// Incorrect data given
 	if err := user.Valid(); err != nil {
-		http.Error(w, err.Error(), errors.ErrorToHttpStatusCode[err])
+		errors.SendErrorResponse(w, errors.ErrorInfo{
+			General: err, Internal: errors.ErrorUserDataInvalid,
+		})
 		return
 	}
 
 	// User already registered
-	if err := userIsAlreadyRegistered(user); err != nil {
-		http.Error(w, err.Error(), errors.ErrorToHttpStatusCode[err])
+	if err := userIsAlreadySignedUP(user); err != nil {
+		errors.SendErrorResponse(w, errors.ErrorInfo{
+			General: err, Internal: errors.ErrorUserAlreadyRegistered,
+		})
 		return
 	}
 
@@ -66,6 +82,15 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	registeredUsers = append(registeredUsers, user)
 	regUsrMutex.Unlock()
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Registration successfull"))
+	respJSON, err := json.Marshal(response.SignUpResponse{
+		UserId: user.UserID, Message: respSignUpSuccessMesssage,
+	})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(respJSON)
 }
