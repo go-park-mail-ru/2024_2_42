@@ -173,7 +173,7 @@
           }
         }
       },
-      "/register": {
+      "/signup": {
         "post": {
           "tags": ["Authentication"],
           "summary": "Register new user",
@@ -184,9 +184,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["user_nickname", "user_email", "user_password"],
+                  "required": ["user_name", "user_email", "user_password"],
                   "properties": {
-                    "user_nickname": {
+                    "user_name": {
                       "type": "string",
                       "example": "user123",
                       "description": "User login"
@@ -227,7 +227,7 @@
                 }
               }
             },
-            "401": {
+            "400": {
               "description": "Missing or invalid request body",
               "content": {
                 "application/json": {

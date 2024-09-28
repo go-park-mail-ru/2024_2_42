@@ -1,9 +1,9 @@
 package models
 
 import (
-	"fmt"
 	"html"
 	"time"
+	"youpin/internal/errors"
 )
 
 type Pin struct {
@@ -31,7 +31,7 @@ func (p Pin) Valid() error {
 	if p.titleValid() && p.descriptionValid() {
 		return nil
 	}
-	return fmt.Errorf("invalid pin data")
+	return errors.ErrorPinDataInvalid
 }
 
 func (p Pin) titleValid() bool {
