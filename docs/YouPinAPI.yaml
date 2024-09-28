@@ -9,7 +9,7 @@ servers:
 paths:
   /is_authorized:
     get:
-      tags: 
+      tags:
         - Authentication
       summary: "Get auth status"
       parameters: 
@@ -53,12 +53,15 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                - user_email
+                - user_password 
               properties:
-                username:
+                user_email:
                   type: string
-                  example: "user123"
-                  description: "Username login"
-                password:
+                  example: "user@user.com"
+                  description: "User email"
+                user_password:
                   type: string
                   example: "password123"
                   description: "Password for authentification"
@@ -233,12 +236,8 @@ defenitions:
   entity.UserResponse:
     type: object
     properties:
-      use_id:
+      user_id:
         type: integer
-      user_name:
-        type: string
-      user_avatar_url:
-        type: string
         
   entity.UserRegistration:
     type: object

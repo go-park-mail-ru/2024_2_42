@@ -2,45 +2,57 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"sync"
 	"time"
-	"youpin/internal/errors"
+
+	internal_errors "youpin/internal/errors"
 	"youpin/internal/models"
+	"youpin/internal/models/request"
+	"youpin/internal/models/response"
 
 	"github.com/golang-jwt/jwt"
 )
 
-var (
-	nextUserID uint64 = 2
+type userSession struct {
+	userID uint64
+	token  string
+}
 
-	regUsrMutex                   = &sync.Mutex{}
-	registeredUsers []models.User = []models.User{
-		{
-			UserID:       1,
-			UserName:     "admin",
-			NickName:     "admin",
-			Email:        "example@test.com",
-			Password:     "12345678",
-			BirthTime:    time.Date(2000, 1, 1, 0, 0, 0, 0, time.Now().Location()),
-			Gender:       "table",
-			AvatarUrl:    "",
-			Followers:    []models.User{},
-			Following:    []models.User{},
-			Boards:       []models.Board{},
-			CreationTime: time.Now(),
-			UpdateTime:   time.Now(),
-		},
-	}
+const tokenExpirationTime = time.Hour * 72
+
+var (
+	SECRET = []byte(os.Getenv("JWT_SECRET"))
+
+	sessionsMutex  = &sync.Mutex{}
+	activeSessions = map[uint64]userSession{}
+
+	authUsrMutex    = &sync.Mutex{}
+	authorizedUsers = []models.User{}
 )
 
-var SECRET = []byte(os.Getenv("JWT_SECRET"))
+func userHasActiveSession(req request.LoginRequest) bool {
+	authUsrMutex.Lock()
+	defer authUsrMutex.Unlock()
 
-type LoginRequest struct {
-	UserName string `json:"user_name"`
-	Password string `json:"password"`
+	var id uint64
+	for _, user := range authorizedUsers {
+		if user.UserName == req.Email && user.Password == req.Password {
+			id = user.UserID
+			break
+		}
+	}
+
+	sessionsMutex.Lock()
+	defer sessionsMutex.Unlock()
+	if _, ok := activeSessions[id]; ok {
+		return true
+	}
+
+	return false
 }
 
 // LogIn authenticates a user by checking provided credentials and returns a session token
@@ -55,57 +67,80 @@ type LoginRequest struct {
 //	@Failure		401	{object}	errors.ErrorResponse	"Invalid username or password"
 //	@Router			/login [post]
 func LogIn(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, errors.ErrorNotAllowedMethod.Error(), http.StatusMethodNotAllowed)
-		return
-	}
+	var req request.LoginRequest
+	var user models.User
 
-	var loginRequest LoginRequest
-	err := json.NewDecoder(r.Body).Decode(&loginRequest)
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, errors.ErrorWithInvalidRequestBody.Error(), http.StatusBadRequest)
+		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInvalidOrMissingRequestBody,
+		})
 		return
 	}
+	json.NewDecoder(r.Body).Decode(&user)
+	userID := getUserID(user)
 
-	user, found := findUser(loginRequest.UserName, loginRequest.Password)
-	if !found {
-		http.Error(w, errors.ErrorWithInvalidUsernameOrPassword.Error(), http.StatusUnauthorized)
+	// User is not registered
+	if err = userIsAlreadySignedUP(user); err == nil {
+		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+			Internal: internal_errors.ErrUserIsNotRegistered,
+		})
+	}
+
+	// Does user already have an active session?
+	if userHasActiveSession(req) {
+		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+			Internal: internal_errors.ErrUserAlreadyAuthorized,
+		})
 		return
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": user.UserName,
-		"exp":      time.Now().Add(time.Hour * 72).Unix(), // токен действителен 72 часа
+		"user_id":    userID,
+		"login": req.Email,
+		"exp":   time.Now().Add(tokenExpirationTime).Unix(),
 	})
 
-	cryptedToken, err := token.SignedString(SECRET)
+	signedToken, err := token.SignedString(SECRET)
 	if err != nil {
-		http.Error(w, "Error signing the token", http.StatusInternalServerError)
+		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrCantSignSessionToken,
+		})
 		return
 	}
 
+	sessionsMutex.Lock()
+	activeSessions[userID] = userSession{
+		userID: userID, token: signedToken,
+	}
+
+	sessionsMutex.Unlock()
+
 	cookie := &http.Cookie{
 		Name:     "session_token",
-		Value:    cryptedToken,
+		Value:    signedToken,
 		HttpOnly: true,
 		Secure:   true,
 		Expires:  time.Now().Add(72 * time.Hour),
 	}
 
 	http.SetCookie(w, cookie)
-	w.Write([]byte("Login successful"))
+
+	sendLogInResponse(w, response.LogInResponse{
+		SessionCookie: signedToken,
+	})
 }
 
-func findUser(username, password string) (*models.User, bool) {
-	regUsrMutex.Lock()
-	defer regUsrMutex.Unlock()
-
-	for _, user := range registeredUsers {
-		if user.UserName == username && user.Password == password {
-			return &user, true
-		}
+func sendLogInResponse(w http.ResponseWriter, sr response.LogInResponse) {
+	respJSON, err := json.Marshal(sr)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
+		return
 	}
-	return nil, false
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(respJSON)
 }
 
 // LogOut removes the session token for the user
@@ -120,6 +155,15 @@ func findUser(username, password string) (*models.User, bool) {
 //	@Failure		500	{object}	errors.ErrorResponse	"Bad server response"
 //	@Router			/logout [get]
 func LogOut(w http.ResponseWriter, r *http.Request) {
+	// Is user authorized?
+	_, err := r.Cookie("session_token")
+	if errors.Is(err, http.ErrNoCookie) {
+		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrUserIsNotAuthorized,
+		})
+		return
+	}
+
 	cookie := &http.Cookie{
 		Name:     "session_token",
 		Value:    "",
@@ -128,7 +172,7 @@ func LogOut(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, cookie)
-	fmt.Fprint(w, "Successful logout")
+	w.Write([]byte("Successful logout"))
 }
 
 // IsAuthorized checks if a user is authenticated
@@ -143,34 +187,45 @@ func LogOut(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500	{object}	errors.ErrorResponse	"Bad server response"
 //	@Router			/is_authorized [get]
 func IsAuthorized(w http.ResponseWriter, r *http.Request) {
+	// Is user authorized?
 	cookie, err := r.Cookie("session_token")
-	if err != nil {
-		if err == http.ErrNoCookie {
-			http.Error(w, "No session token", http.StatusUnauthorized)
-			return
-		}
-		http.Error(w, "Bad request", http.StatusBadRequest)
+	if errors.Is(err, http.ErrNoCookie) {
+		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrUserIsNotAuthorized,
+		})
 		return
 	}
 
 	token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("no session token")
-		}
-
 		return SECRET, nil
 	})
 
-	if err != nil || !token.Valid {
-		http.Error(w, "Invalid token", http.StatusUnauthorized)
+	if !token.Valid {
+		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInvalidSessionToken,
+		})
 		return
 	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		username := claims["username"].(string)
-		w.Write([]byte("Successfully authorized as " + username))
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		SendIsAuthResponse(w, response.IsAuthResponse{
+			UserID: claims["user_id"].(string),
+		})
+	} else {
+		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+			Internal: internal_errors.ErrBadRequest,
+		})
+	}
+}
+
+func SendIsAuthResponse(w http.ResponseWriter, ar response.IsAuthResponse) {
+	respJSON, err := json.Marshal(ar)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
 		return
 	}
 
-	http.Error(w, "Bad request", http.StatusBadRequest)
+	w.WriteHeader(http.StatusOK)
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(respJSON)
 }
