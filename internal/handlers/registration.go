@@ -78,13 +78,20 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user.UserID = nextUserID
+	nextUserID++
+
 	regUsrMutex.Lock()
 	registeredUsers = append(registeredUsers, user)
 	regUsrMutex.Unlock()
 
-	respJSON, err := json.Marshal(response.SignUpResponse{
+	SendSignUpResponse(w, response.SignUpResponse{
 		UserId: user.UserID, Message: respSignUpSuccessMesssage,
 	})
+}
+
+func SendSignUpResponse(w http.ResponseWriter, sr response.SignUpResponse) {
+	respJSON, err := json.Marshal(sr)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
 		return
