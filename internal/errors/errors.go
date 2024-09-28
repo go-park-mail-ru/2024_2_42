@@ -29,6 +29,8 @@ var (
 	ErrorInvalidOrMissingRequestBody = errors.New("request body is invalid")
 
 	ErrorUserAlreadyRegistered = errors.New("user is already registered")
+
+	ErrFeedNotAccessible = errors.New("can't load the feed")
 )
 
 var ErrorMapping = map[error]struct {
@@ -46,6 +48,8 @@ var ErrorMapping = map[error]struct {
 	ErrorUserAlreadyRegistered: {HttpCode: 403, InternalCode: 6},
 
 	ErrorInvalidOrMissingRequestBody: {HttpCode: 400, InternalCode: 7},
+
+	ErrFeedNotAccessible: {HttpCode: 500, InternalCode: 15},
 }
 
 func SendErrorResponse(w http.ResponseWriter, ei ErrorInfo) {

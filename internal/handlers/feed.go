@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	internal_errors "youpin/internal/errors"
 	"youpin/internal/models"
 )
 
@@ -142,6 +143,9 @@ func Feed(w http.ResponseWriter, r *http.Request) {
 	feed := models.NewFeed(pins)
 	feedJSON, err := json.Marshal(feed)
 	if err != nil {
+		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrFeedNotAccessible,
+		})
 		fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
 		return
 	}
