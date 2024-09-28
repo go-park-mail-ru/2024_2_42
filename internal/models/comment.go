@@ -1,9 +1,9 @@
 package models
 
 import (
-	"fmt"
 	"html"
 	"time"
+	"youpin/internal/errors"
 )
 
 type Comment struct {
@@ -24,5 +24,5 @@ func (c Comment) Valid() error {
 	if len(c.Body) > 0 {
 		return nil
 	}
-	return fmt.Errorf("invalid comment data")
+	return errors.ErrorCommentDataInvalid
 }

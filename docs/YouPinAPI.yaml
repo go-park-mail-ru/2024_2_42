@@ -122,7 +122,7 @@ paths:
               schema:
                 $ref: "#/defenitions/err.ErrorResponse"
   
-  /register:
+  /signup:
     post:
       tags:
         - Authentication
@@ -135,7 +135,7 @@ paths:
             schema:
               type: object
               required:
-                - user_nickname
+                - user_name
                 - user_email
                 - user_password
               properties:
@@ -166,7 +166,7 @@ paths:
               schema:
                 $ref: "#/defenitions/err.ErrorResponse"
                 
-        '401':
+        '400':
           description: "Missing or invalid request body"
           content:
             application/json:
