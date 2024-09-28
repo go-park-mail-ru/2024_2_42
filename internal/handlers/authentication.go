@@ -40,7 +40,7 @@ func userHasActiveSession(req request.LoginRequest) bool {
 
 	var id uint64
 	for _, user := range authorizedUsers {
-		if user.UserName == req.Email && user.Password == req.Password {
+		if user.Email == req.Email && user.Password == req.Password {
 			id = user.UserID
 			break
 		}
