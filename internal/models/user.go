@@ -1,11 +1,11 @@
 package models
 
 import (
-	"fmt"
 	"html"
 	"net/mail"
 	"time"
 
+	"youpin/internal/errors"
 	"youpin/pkg/utils"
 )
 
@@ -32,6 +32,15 @@ type User struct {
 	UpdateTime   time.Time `json:"update_time"`
 }
 
+func NewUser(userID uint64, userName, email, password string) User {
+	return User{
+		UserID:   userID,
+		UserName: userName,
+		Email:    email,
+		Password: password,
+	}
+}
+
 func (u *User) Sanitize() {
 	u.UserName = html.EscapeString(u.UserName)
 	u.NickName = html.EscapeString(u.NickName)
@@ -42,14 +51,13 @@ func (u *User) Sanitize() {
 }
 
 func (u User) Valid() error {
-	if len(u.UserName) > minUserNameLength &&
-		len(u.NickName) > minNickNameLength &&
-		len(u.Password) > minPasswordLength &&
+	if len(u.UserName) >= minUserNameLength &&
+		len(u.Password) >= minPasswordLength &&
 		u.BirthTime.Before(time.Now()) &&
 		u.emailValid() {
 		return nil
 	}
-	return fmt.Errorf("invalid user data")
+	return errors.ErrorUserDataInvalid
 }
 
 func (u User) emailValid() bool {
