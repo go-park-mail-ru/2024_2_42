@@ -17,18 +17,29 @@ type ErrorInfo struct {
 
 // Models validation
 var (
-	ErrorUserDataInvalid    = errors.New("user data is invalid")
-	ErrorSectionDataInvalid = errors.New("section data is invalid")
-	ErrorPinDataInvalid     = errors.New("pin data is invalid")
-	ErrorCommentDataInvalid = errors.New("comment data is invalid")
-	ErrorBoardDataInvalid   = errors.New("board data is invalid")
+	ErrUserDataInvalid    = errors.New("user data is invalid")
+	ErrSectionDataInvalid = errors.New("section data is invalid")
+	ErrPinDataInvalid     = errors.New("pin data is invalid")
+	ErrCommentDataInvalid = errors.New("comment data is invalid")
+	ErrBoardDataInvalid   = errors.New("board data is invalid")
 )
 
 // Handlers
 var (
-	ErrorInvalidOrMissingRequestBody = errors.New("request body is invalid")
+	ErrBadRequest = errors.New("bad request")
 
-	ErrorUserAlreadyRegistered = errors.New("user is already registered")
+	ErrInvalidOrMissingRequestBody = errors.New("request body is invalid")
+	ErrMethodIsNotAllowed          = errors.New("method is not allowed")
+	ErrCantSignSessionToken        = errors.New("token signing failed")
+
+	ErrUserAlreadyRegistered = errors.New("user is already registered")
+	ErrUserAlreadyAuthorized = errors.New("user is already authorized")
+
+	ErrUserIsNotRegistered = errors.New("user is not registered")
+	ErrUserIsNotAuthorized = errors.New("user is not authorized")
+
+	// JWT token
+	ErrInvalidSessionToken = errors.New("session token is invalid")
 )
 
 var ErrorMapping = map[error]struct {
@@ -36,20 +47,32 @@ var ErrorMapping = map[error]struct {
 	InternalCode int
 }{
 	// Models validation
-	ErrorUserDataInvalid:    {HttpCode: 400, InternalCode: 1},
-	ErrorSectionDataInvalid: {HttpCode: 400, InternalCode: 2},
-	ErrorPinDataInvalid:     {HttpCode: 400, InternalCode: 3},
-	ErrorCommentDataInvalid: {HttpCode: 400, InternalCode: 4},
-	ErrorBoardDataInvalid:   {HttpCode: 400, InternalCode: 5},
+	ErrUserDataInvalid:    {HttpCode: 400, InternalCode: 1},
+	ErrSectionDataInvalid: {HttpCode: 400, InternalCode: 2},
+	ErrPinDataInvalid:     {HttpCode: 400, InternalCode: 3},
+	ErrCommentDataInvalid: {HttpCode: 400, InternalCode: 4},
+	ErrBoardDataInvalid:   {HttpCode: 400, InternalCode: 5},
 
 	// Handlers
-	ErrorUserAlreadyRegistered: {HttpCode: 403, InternalCode: 6},
+	ErrBadRequest: {HttpCode: 400, InternalCode: 6},
 
-	ErrorInvalidOrMissingRequestBody: {HttpCode: 400, InternalCode: 7},
+	ErrInvalidOrMissingRequestBody: {HttpCode: 400, InternalCode: 7},
+	ErrMethodIsNotAllowed:          {HttpCode: 405, InternalCode: 8},
+	ErrCantSignSessionToken:        {HttpCode: 500, InternalCode: 9},
+
+	ErrUserAlreadyRegistered: {HttpCode: 403, InternalCode: 10},
+	ErrUserAlreadyAuthorized: {HttpCode: 403, InternalCode: 11},
+
+	ErrUserIsNotRegistered: {HttpCode: 403, InternalCode: 12},
+	ErrUserIsNotAuthorized: {HttpCode: 401, InternalCode: 13},
+
+	ErrInvalidSessionToken: {HttpCode: 403, InternalCode: 14},
 }
 
 func SendErrorResponse(w http.ResponseWriter, ei ErrorInfo) {
-	fmt.Fprintf(os.Stderr, "error: %s\n", ei.General.Error())
+	if ei.General != nil {
+		fmt.Fprintf(os.Stderr, "error: %s\n", ei.General.Error())
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(ErrorMapping[ei.Internal].HttpCode)
