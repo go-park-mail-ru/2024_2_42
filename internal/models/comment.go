@@ -24,5 +24,5 @@ func (c Comment) Valid() error {
 	if len(c.Body) > 0 {
 		return nil
 	}
-	return errors.ErrorCommentDataInvalid
+	return errors.ErrCommentDataInvalid
 }

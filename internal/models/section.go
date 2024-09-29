@@ -25,7 +25,7 @@ func (s Section) Valid() error {
 	if s.nameValid() && s.descriptionValid() {
 		return nil
 	}
-	return errors.ErrorSectionDataInvalid
+	return errors.ErrSectionDataInvalid
 }
 
 func (s Section) nameValid() bool {

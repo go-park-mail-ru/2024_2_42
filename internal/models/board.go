@@ -29,7 +29,7 @@ func (b Board) Valid() error {
 	if b.nameValid() && b.descriptionValid() {
 		return nil
 	}
-	return errors.ErrorBoardDataInvalid
+	return errors.ErrBoardDataInvalid
 }
 
 func (b Board) nameValid() bool {

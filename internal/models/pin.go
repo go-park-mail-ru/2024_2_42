@@ -31,7 +31,7 @@ func (p Pin) Valid() error {
 	if p.titleValid() && p.descriptionValid() {
 		return nil
 	}
-	return errors.ErrorPinDataInvalid
+	return errors.ErrPinDataInvalid
 }
 
 func (p Pin) titleValid() bool {
