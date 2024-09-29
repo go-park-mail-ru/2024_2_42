@@ -57,7 +57,7 @@ func (u User) Valid() error {
 		u.emailValid() {
 		return nil
 	}
-	return errors.ErrorUserDataInvalid
+	return errors.ErrUserDataInvalid
 }
 
 func (u User) emailValid() bool {

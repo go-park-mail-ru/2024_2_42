@@ -40,9 +40,9 @@ var (
 
 	// JWT token
 	ErrInvalidSessionToken = errors.New("session token is invalid")
-  
-  // Feed
-  ErrFeedNotAccessible = errors.New("can't load the feed")
+
+	// Feed
+	ErrFeedNotAccessible = errors.New("can't load the feed")
 )
 
 var ErrorMapping = map[error]struct {
@@ -70,9 +70,9 @@ var ErrorMapping = map[error]struct {
 	ErrUserIsNotAuthorized: {HttpCode: 401, InternalCode: 13},
 
 	ErrInvalidSessionToken: {HttpCode: 403, InternalCode: 14},
-  
-  // Feed
-  ErrFeedNotAccessible: {HttpCode: 500, InternalCode: 15},
+
+	// Feed
+	ErrFeedNotAccessible: {HttpCode: 500, InternalCode: 15},
 }
 
 func SendErrorResponse(w http.ResponseWriter, ei ErrorInfo) {

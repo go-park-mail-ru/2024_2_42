@@ -67,6 +67,10 @@ func userHasActiveSession(req request.LoginRequest) bool {
 //	@Failure		401	{object}	errors.ErrorResponse	"Invalid username or password"
 //	@Router			/login [post]
 func LogIn(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		return
+	}
+
 	var req request.LoginRequest
 	var user models.User
 
@@ -77,7 +81,8 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	json.NewDecoder(r.Body).Decode(&user)
+	user.Email = req.Email
+	user.Password = req.Password
 	userID := getUserID(user)
 
 	// User is not registered
@@ -96,9 +101,9 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id":    userID,
-		"login": req.Email,
-		"exp":   time.Now().Add(tokenExpirationTime).Unix(),
+		"user_id": userID,
+		"login":   req.Email,
+		"exp":     time.Now().Add(tokenExpirationTime).Unix(),
 	})
 
 	signedToken, err := token.SignedString(SECRET)
@@ -155,6 +160,10 @@ func sendLogInResponse(w http.ResponseWriter, sr response.LogInResponse) {
 //	@Failure		500	{object}	errors.ErrorResponse	"Bad server response"
 //	@Router			/logout [get]
 func LogOut(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		return
+	}
+
 	// Is user authorized?
 	_, err := r.Cookie("session_token")
 	if errors.Is(err, http.ErrNoCookie) {
@@ -187,6 +196,10 @@ func LogOut(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500	{object}	errors.ErrorResponse	"Bad server response"
 //	@Router			/is_authorized [get]
 func IsAuthorized(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		return
+	}
+
 	// Is user authorized?
 	cookie, err := r.Cookie("session_token")
 	if errors.Is(err, http.ErrNoCookie) {
@@ -209,7 +222,7 @@ func IsAuthorized(w http.ResponseWriter, r *http.Request) {
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		SendIsAuthResponse(w, response.IsAuthResponse{
-			UserID: claims["user_id"].(string),
+			UserID: claims["user_id"].(float64),
 		})
 	} else {
 		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{

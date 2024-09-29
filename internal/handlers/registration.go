@@ -42,12 +42,22 @@ var (
 
 func userIsAlreadySignedUP(u models.User) error {
 	for _, user := range registeredUsers {
-		if user.Email == u.Email {
-			return errors.ErrorUserAlreadyRegistered
+		if user.Email == u.Email && user.Password == u.Password {
+			return errors.ErrUserAlreadyRegistered
 		}
 	}
 
 	return nil
+}
+
+func getUserID(u models.User) uint64 {
+	for _, user := range registeredUsers {
+		if user.Email == u.Email && user.Password == u.Password {
+			return user.UserID
+		}
+	}
+
+	return 0
 }
 
 func SignUp(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +65,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		errors.SendErrorResponse(w, errors.ErrorInfo{
-			General: err, Internal: errors.ErrorInvalidOrMissingRequestBody,
+			General: err, Internal: errors.ErrInvalidOrMissingRequestBody,
 		})
 		return
 	}
@@ -65,7 +75,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	// Incorrect data given
 	if err := user.Valid(); err != nil {
 		errors.SendErrorResponse(w, errors.ErrorInfo{
-			General: err, Internal: errors.ErrorUserDataInvalid,
+			General: err, Internal: errors.ErrUserDataInvalid,
 		})
 		return
 	}
@@ -73,7 +83,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	// User already registered
 	if err := userIsAlreadySignedUP(user); err != nil {
 		errors.SendErrorResponse(w, errors.ErrorInfo{
-			General: err, Internal: errors.ErrorUserAlreadyRegistered,
+			General: err, Internal: errors.ErrUserAlreadyRegistered,
 		})
 		return
 	}
@@ -88,6 +98,8 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	SendSignUpResponse(w, response.SignUpResponse{
 		UserId: user.UserID, Message: respSignUpSuccessMesssage,
 	})
+
+	fmt.Println(registeredUsers)
 }
 
 func SendSignUpResponse(w http.ResponseWriter, sr response.SignUpResponse) {
