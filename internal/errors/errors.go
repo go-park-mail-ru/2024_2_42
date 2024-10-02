@@ -17,32 +17,35 @@ type ErrorInfo struct {
 
 // Models validation
 var (
-	ErrUserDataInvalid    = errors.New("user data is invalid")
-	ErrSectionDataInvalid = errors.New("section data is invalid")
-	ErrPinDataInvalid     = errors.New("pin data is invalid")
-	ErrCommentDataInvalid = errors.New("comment data is invalid")
-	ErrBoardDataInvalid   = errors.New("board data is invalid")
+	ErrUserDataInvalid    = errors.New("данные пользователя невалидны")
+	ErrSectionDataInvalid = errors.New("данные секции невалидны")
+	ErrPinDataInvalid     = errors.New("данные пина невалидны")
+	ErrCommentDataInvalid = errors.New("данные комментария невалидны")
+	ErrBoardDataInvalid   = errors.New("данные доски невалидны")
 )
 
 // Handlers
 var (
 	ErrBadRequest = errors.New("bad request")
 
-	ErrInvalidOrMissingRequestBody = errors.New("request body is invalid")
-	ErrMethodIsNotAllowed          = errors.New("method is not allowed")
-	ErrCantSignSessionToken        = errors.New("token signing failed")
+	ErrInvalidOrMissingRequestBody = errors.New("тело запроса невалидно")
+	ErrMethodIsNotAllowed          = errors.New("метод не допустим")
+	ErrCantSignSessionToken        = errors.New("ошибка подписи сессионного токена")
+	ErrCantProcessFormData         = errors.New("ошибка разбора данных логина")
 
-	ErrUserAlreadyRegistered = errors.New("user is already registered")
-	ErrUserAlreadyAuthorized = errors.New("user is already authorized")
+	ErrUserAlreadyRegistered = errors.New("пользователь уже зарегистрирован")
+	ErrUserAlreadyAuthorized = errors.New("пользователь уже авторизован")
 
-	ErrUserIsNotRegistered = errors.New("user is not registered")
-	ErrUserIsNotAuthorized = errors.New("user is not authorized")
+	ErrUserIsNotRegistered = errors.New("такой пользователь не зарегистрирован")
+	ErrUserIsNotAuthorized = errors.New("пользователь не авторизован")
+
+	ErrDuringLogOutOperation = errors.New("ошибка при выходе из аккаунта")
 
 	// JWT token
-	ErrInvalidSessionToken = errors.New("session token is invalid")
+	ErrInvalidSessionToken = errors.New("сессионный токен невалиден")
 
 	// Feed
-	ErrFeedNotAccessible = errors.New("can't load the feed")
+	ErrFeedNotAccessible = errors.New("ошибка при загрузке ленты")
 )
 
 var ErrorMapping = map[error]struct {
@@ -62,22 +65,25 @@ var ErrorMapping = map[error]struct {
 	ErrInvalidOrMissingRequestBody: {HttpCode: 400, InternalCode: 7},
 	ErrMethodIsNotAllowed:          {HttpCode: 405, InternalCode: 8},
 	ErrCantSignSessionToken:        {HttpCode: 500, InternalCode: 9},
+	ErrCantProcessFormData:         {HttpCode: 500, InternalCode: 10},
 
-	ErrUserAlreadyRegistered: {HttpCode: 403, InternalCode: 10},
-	ErrUserAlreadyAuthorized: {HttpCode: 403, InternalCode: 11},
+	ErrUserAlreadyRegistered: {HttpCode: 403, InternalCode: 11},
+	ErrUserAlreadyAuthorized: {HttpCode: 403, InternalCode: 12},
 
-	ErrUserIsNotRegistered: {HttpCode: 403, InternalCode: 12},
-	ErrUserIsNotAuthorized: {HttpCode: 401, InternalCode: 13},
+	ErrUserIsNotRegistered: {HttpCode: 403, InternalCode: 13},
+	ErrUserIsNotAuthorized: {HttpCode: 401, InternalCode: 14},
 
-	ErrInvalidSessionToken: {HttpCode: 403, InternalCode: 14},
+	ErrDuringLogOutOperation: {HttpCode: 500, InternalCode: 15},
+
+	ErrInvalidSessionToken: {HttpCode: 403, InternalCode: 16},
 
 	// Feed
-	ErrFeedNotAccessible: {HttpCode: 500, InternalCode: 15},
+	ErrFeedNotAccessible: {HttpCode: 500, InternalCode: 17},
 }
 
 func SendErrorResponse(w http.ResponseWriter, ei ErrorInfo) {
 	if ei.General != nil {
-		fmt.Fprintf(os.Stderr, "error: %s\n", ei.General.Error())
+		fmt.Fprintf(os.Stdout, "error: %s\n", ei.General.Error())
 	}
 
 	w.Header().Set("Content-Type", "application/json")

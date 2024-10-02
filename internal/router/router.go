@@ -19,7 +19,7 @@ func Router() {
 	router.HandleFunc("/logout", handlers.LogOut)
 	router.HandleFunc("/is_authorized", handlers.IsAuthorized)
 	router.HandleFunc("/signup", handlers.SignUp)
-	router.HandleFunc("/feed", handlers.Feed)
+	router.HandleFunc("/", handlers.Feed)
 
 	fmt.Printf("starting server at %s\n", routerParams.MainServerPort)
 	log.Fatal(http.ListenAndServe(routerParams.MainServerPort, router))

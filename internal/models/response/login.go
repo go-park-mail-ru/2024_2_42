@@ -1,7 +1,7 @@
 package response
 
 type LogInResponse struct {
-	SessionCookie string `json:"session-cookie"`
+	SessionCookie string `json:"session_cookie"`
 }
 
 type IsAuthResponse struct {

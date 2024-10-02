@@ -2,19 +2,17 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 
-	"youpin/internal/errors"
+	internal_errors "youpin/internal/errors"
 	"youpin/internal/models"
 	"youpin/internal/models/response"
 )
 
 const (
-	respSignUpSuccessMesssage = "Registration successful. Please confirm your email"
+	respSignUpSuccessMesssage = "Registration successful!"
 )
 
 var (
@@ -27,7 +25,7 @@ var (
 			UserName:     "admin",
 			NickName:     "admin",
 			Email:        "example@test.com",
-			Password:     "12345678",
+			Password:     "12345678Q",
 			BirthTime:    time.Date(2000, 1, 1, 0, 0, 0, 0, time.Now().Location()),
 			Gender:       "table",
 			AvatarUrl:    "",
@@ -42,8 +40,8 @@ var (
 
 func userIsAlreadySignedUP(u models.User) error {
 	for _, user := range registeredUsers {
-		if user.Email == u.Email && user.Password == u.Password {
-			return errors.ErrUserAlreadyRegistered
+		if user.Email == u.Email {
+			return internal_errors.ErrUserAlreadyRegistered
 		}
 	}
 
@@ -61,11 +59,22 @@ func getUserID(u models.User) uint64 {
 }
 
 func SignUp(w http.ResponseWriter, r *http.Request) {
+	header := w.Header()
+	header.Add("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
+	header.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	var user models.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		errors.SendErrorResponse(w, errors.ErrorInfo{
-			General: err, Internal: errors.ErrInvalidOrMissingRequestBody,
+		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInvalidOrMissingRequestBody,
 		})
 		return
 	}
@@ -74,16 +83,16 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 
 	// Incorrect data given
 	if err := user.Valid(); err != nil {
-		errors.SendErrorResponse(w, errors.ErrorInfo{
-			General: err, Internal: errors.ErrUserDataInvalid,
+		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrUserDataInvalid,
 		})
 		return
 	}
 
 	// User already registered
 	if err := userIsAlreadySignedUP(user); err != nil {
-		errors.SendErrorResponse(w, errors.ErrorInfo{
-			General: err, Internal: errors.ErrUserAlreadyRegistered,
+		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrUserAlreadyRegistered,
 		})
 		return
 	}
@@ -98,18 +107,16 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	SendSignUpResponse(w, response.SignUpResponse{
 		UserId: user.UserID, Message: respSignUpSuccessMesssage,
 	})
-
-	fmt.Println(registeredUsers)
 }
 
 func SendSignUpResponse(w http.ResponseWriter, sr response.SignUpResponse) {
-	respJSON, err := json.Marshal(sr)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(sr); err != nil {
+		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrCantProcessFormData,
+		})
 		return
 	}
-
-	w.WriteHeader(http.StatusCreated)
-	w.Header().Add("Content-Type", "application/json")
-	w.Write(respJSON)
 }

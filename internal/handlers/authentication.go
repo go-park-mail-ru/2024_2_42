@@ -67,7 +67,14 @@ func userHasActiveSession(req request.LoginRequest) bool {
 //	@Failure		401	{object}	errors.ErrorResponse	"Invalid username or password"
 //	@Router			/login [post]
 func LogIn(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
+	header := w.Header()
+	header.Add("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
+	header.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
@@ -81,15 +88,25 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+
+	if !req.Valid() {
+		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+			Internal: internal_errors.ErrUserDataInvalid,
+		})
+		return
+	}
+
 	user.Email = req.Email
 	user.Password = req.Password
 	userID := getUserID(user)
+	user.UserID = userID
 
 	// User is not registered
 	if err = userIsAlreadySignedUP(user); err == nil {
 		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
 			Internal: internal_errors.ErrUserIsNotRegistered,
 		})
+		return
 	}
 
 	// Does user already have an active session?
@@ -119,6 +136,8 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 		userID: userID, token: signedToken,
 	}
 
+	authorizedUsers = append(authorizedUsers, user)
+
 	sessionsMutex.Unlock()
 
 	cookie := &http.Cookie{
@@ -137,15 +156,16 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 }
 
 func sendLogInResponse(w http.ResponseWriter, sr response.LogInResponse) {
-	respJSON, err := json.Marshal(sr)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	// Отправляем JSON-ответ
+	if err := json.NewEncoder(w).Encode(sr); err != nil {
+		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrCantProcessFormData,
+		})
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Header().Add("Content-Type", "application/json")
-	w.Write(respJSON)
 }
 
 // LogOut removes the session token for the user
@@ -160,12 +180,17 @@ func sendLogInResponse(w http.ResponseWriter, sr response.LogInResponse) {
 //	@Failure		500	{object}	errors.ErrorResponse	"Bad server response"
 //	@Router			/logout [get]
 func LogOut(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Headers", "Content-type")
+	w.Header().Set("Access-Control-Allow-Methods", "POST")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+
 	if r.Method != "POST" {
 		return
 	}
 
 	// Is user authorized?
-	_, err := r.Cookie("session_token")
+	c, err := r.Cookie("session_token")
 	if errors.Is(err, http.ErrNoCookie) {
 		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
 			General: err, Internal: internal_errors.ErrUserIsNotAuthorized,
@@ -173,6 +198,25 @@ func LogOut(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Need to remove user from authorized list
+	var id uint64
+	for k, v := range activeSessions {
+		if v.token == c.Value {
+			id = k
+		}
+	}
+
+	var idx int
+	for i, user := range authorizedUsers {
+		if user.UserID == id {
+			idx = i
+		}
+	}
+
+	delete(activeSessions, id);
+	authorizedUsers = append(authorizedUsers[:idx], authorizedUsers[idx+1:]...)
+
+	// Set cookie
 	cookie := &http.Cookie{
 		Name:     "session_token",
 		Value:    "",
@@ -181,7 +225,22 @@ func LogOut(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, cookie)
-	w.Write([]byte("Successful logout"))
+	sendLogOutResponse(w, response.LogOutResponse{
+		Message: "Logout successfull",
+	})
+}
+
+func sendLogOutResponse(w http.ResponseWriter, lr response.LogOutResponse) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	// Отправляем JSON-ответ
+	if err := json.NewEncoder(w).Encode(lr); err != nil {
+		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrCantProcessFormData,
+		})
+		return
+	}
 }
 
 // IsAuthorized checks if a user is authenticated
@@ -196,6 +255,11 @@ func LogOut(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500	{object}	errors.ErrorResponse	"Bad server response"
 //	@Router			/is_authorized [get]
 func IsAuthorized(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Headers", "Content-type")
+	w.Header().Set("Access-Control-Allow-Methods", "POST")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+
 	if r.Method != "GET" {
 		return
 	}
