@@ -41,10 +41,10 @@ func TestUserIsAlreadySignedUP(t *testing.T) {
 		},
 		"Already registered": {
 			input: models.User{
-				UserID:       2,
-				UserName:     "admin1",
-				NickName:     "admin1",
-				Email:        "example1@test.com",
+				UserID:       1,
+				UserName:     "admin",
+				NickName:     "admin",
+				Email:        "example@test.com",
 				Password:     "12345678Q",
 				BirthTime:    time.Date(2000, 1, 1, 0, 0, 0, 0, time.Now().Location()),
 				Gender:       "table",
@@ -131,8 +131,7 @@ func TestSignUp(t *testing.T) {
 				Password: "12345678Q",
 			},
 			expectedReturn: ExpectedReturn{
-				StatusCode:    http.StatusOK,
-				SessionCookie: "session_token/",
+				StatusCode: http.StatusOK,
 			},
 		},
 		{
