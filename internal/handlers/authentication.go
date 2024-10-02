@@ -70,7 +70,7 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 	header := w.Header()
 	header.Add("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
 	header.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Origin", "http://37.139.41.77:3000")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 	if r.Method == "OPTIONS" {
@@ -182,7 +182,7 @@ func sendLogInResponse(w http.ResponseWriter, sr response.LogInResponse) {
 func LogOut(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-type")
 	w.Header().Set("Access-Control-Allow-Methods", "POST")
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Origin", "http://37.139.41.77:3000")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 	if r.Method != "POST" {
@@ -257,7 +257,7 @@ func sendLogOutResponse(w http.ResponseWriter, lr response.LogOutResponse) {
 func IsAuthorized(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-type")
 	w.Header().Set("Access-Control-Allow-Methods", "POST")
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Origin", "http://37.139.41.77:3000")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 	if r.Method != "GET" {
