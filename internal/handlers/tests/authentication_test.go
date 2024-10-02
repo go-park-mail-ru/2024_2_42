@@ -74,14 +74,14 @@ func TestIsAuthorized(t *testing.T) {
 
 	testData := []struct {
 		name           string
-		req            request.LoginRequest
+		cookie         *http.Cookie
 		expectedReturn ExpectedReturn
 	}{
 		{
 			name: "Valid credentials",
-			req: request.LoginRequest{
-				Email:    "example@test.com",
-				Password: "12345678Q",
+			cookie: &http.Cookie{
+				Name:  "session_token",
+				Value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjgxNDQ0NTYsImxvZ2luIjoiZXhhbXBsZUB0ZXN0LmNvbSIsInVzZXJfaWQiOjF9.83PGao9P9HNzO10f_J-1CMi_7IzWv-iJBHf8JWpk_Oc",
 			},
 			expectedReturn: ExpectedReturn{
 				StatusCode: http.StatusOK,
@@ -89,9 +89,9 @@ func TestIsAuthorized(t *testing.T) {
 		},
 		{
 			name: "Invalid credentials",
-			req: request.LoginRequest{
-				Email:    "wrong@example.com",
-				Password: "wrongPassword",
+			cookie: &http.Cookie{
+				Name:  "session_token",
+				Value: "yJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjgxNDQ0NTYsImxvZ2luIjoiZXhhbXBsZUB0ZXN0LmNvbSIsInVzZXJfaWQiOjF9.83PGao9P9HNzO10f_J-1CMi_7IzWv-iJBHf8JWpk_Oc",
 			},
 			expectedReturn: ExpectedReturn{
 				StatusCode: http.StatusForbidden,
@@ -101,35 +101,64 @@ func TestIsAuthorized(t *testing.T) {
 
 	for _, testCase := range testData {
 		t.Run(testCase.name, func(t *testing.T) {
-			// Отправка запроса на логин
-			reqBody, _ := json.Marshal(testCase.req)
-			req, err := http.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(reqBody))
-			if err != nil {
-				t.Fatal(err)
-			}
-			req.Header.Set("Content-Type", "application/json")
-
-			rr := httptest.NewRecorder()
-
-			handlers.LogIn(rr, req)
-
-			// Проверка куки
-			cookie, _ := rr.Cookie("session_cookie")
 
 			reqIsAuth, err := http.NewRequest(http.MethodGet, "/is_authorized", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
 			reqIsAuth.Header.Set("Content-Type", "application/json")
-			if cookie != nil {
-				reqIsAuth.AddCookie(cookie)
+			if testCase.cookie != nil {
+				reqIsAuth.AddCookie(testCase.cookie)
 			}
 
 			rrIsAuth := httptest.NewRecorder()
 			handlers.IsAuthorized(rrIsAuth, reqIsAuth)
-			fmt.Println(reqIsAuth.Cookie("session_token"))
 			require.Equal(t, testCase.expectedReturn.StatusCode, rrIsAuth.Code, "not equal")
 			fmt.Println(rrIsAuth.Result().StatusCode)
+		})
+	}
+}
+
+func TestLogout(t *testing.T) {
+	type ExpectedReturn struct {
+		StatusCode   int
+		ErrorMessage string
+	}
+
+	testData := []struct {
+		name           string
+		cookie         *http.Cookie
+		expectedReturn ExpectedReturn
+	}{
+		{
+			name: "Valid credentials",
+			cookie: &http.Cookie{
+				Name:  "session_token",
+				Value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjgxNDQ0NTYsImxvZ2luIjoiZXhhbXBsZUB0ZXN0LmNvbSIsInVzZXJfaWQiOjF9.83PGao9P9HNzO10f_J-1CMi_7IzWv-iJBHf8JWpk_Oc", // Пример корректного токена
+			},
+			expectedReturn: ExpectedReturn{
+				StatusCode: http.StatusOK,
+			},
+		},
+	}
+
+	for _, testCase := range testData {
+		t.Run(testCase.name, func(t *testing.T) {
+			reqLogout, err := http.NewRequest(http.MethodPost, "/logout", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			reqLogout.Header.Set("Content-Type", "application/json")
+
+			if testCase.cookie != nil {
+				reqLogout.AddCookie(testCase.cookie)
+			}
+
+			rrLogout := httptest.NewRecorder()
+
+			handlers.LogOut(rrLogout, reqLogout)
+
+			require.Equal(t, testCase.expectedReturn.StatusCode, rrLogout.Code, "not equal")
 		})
 	}
 }
