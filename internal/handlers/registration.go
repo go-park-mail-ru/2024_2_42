@@ -120,3 +120,11 @@ func SendSignUpResponse(w http.ResponseWriter, sr response.SignUpResponse) {
 		return
 	}
 }
+
+func TestableUserIsAlreadySignedUP(u models.User) error {
+	return userIsAlreadySignedUP(u)
+}
+
+func TestableGetUserID(u models.User) uint64 {
+	return getUserID(u)
+}

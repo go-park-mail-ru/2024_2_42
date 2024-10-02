@@ -213,7 +213,7 @@ func LogOut(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	delete(activeSessions, id);
+	delete(activeSessions, id)
 	authorizedUsers = append(authorizedUsers[:idx], authorizedUsers[idx+1:]...)
 
 	// Set cookie
