@@ -2,9 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"os"
 	internal_errors "youpin/internal/errors"
 	"youpin/internal/models"
 )
@@ -135,22 +133,30 @@ var (
 )
 
 func Feed(w http.ResponseWriter, r *http.Request) {
+	header := w.Header()
+	header.Add("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
+	header.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	w.Header().Set("Access-Control-Allow-Origin", "http://37.139.41.77:3000")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	if r.Method != "GET" {
 		w.Write([]byte("For now only GET method is allowed"))
 		return
 	}
 
 	feed := models.NewFeed(pins)
-	feedJSON, err := json.Marshal(feed)
-	if err != nil {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	if err := json.NewEncoder(w).Encode(feed); err != nil {
 		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
 			General: err, Internal: internal_errors.ErrFeedNotAccessible,
 		})
-		fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
 		return
 	}
-
-	w.WriteHeader(http.StatusCreated)
-	w.Header().Add("Content-Type", "application/json")
-	w.Write(feedJSON)
 }
