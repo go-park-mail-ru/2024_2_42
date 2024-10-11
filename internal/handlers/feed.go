@@ -10,7 +10,6 @@ import (
 var (
 	pins = []models.Pin{
 		{
-			PinID:       1,
 			AuthorID:    1,
 			Title:       "Pin 1",
 			Description: "Description 1",
@@ -18,7 +17,6 @@ var (
 			BoardID:     1,
 		},
 		{
-			PinID:       2,
 			AuthorID:    1,
 			Title:       "Pin 2",
 			Description: "Description 2",
@@ -26,7 +24,6 @@ var (
 			BoardID:     1,
 		},
 		{
-			PinID:       3,
 			AuthorID:    1,
 			Title:       "Pin 3",
 			Description: "Description 3",
@@ -34,7 +31,6 @@ var (
 			BoardID:     1,
 		},
 		{
-			PinID:       4,
 			AuthorID:    1,
 			Title:       "Pin 4",
 			Description: "Description 4",
@@ -42,7 +38,6 @@ var (
 			BoardID:     1,
 		},
 		{
-			PinID:       5,
 			AuthorID:    1,
 			Title:       "Pin 5",
 			Description: "Description 5",
@@ -50,7 +45,6 @@ var (
 			BoardID:     1,
 		},
 		{
-			PinID:       6,
 			AuthorID:    1,
 			Title:       "Pin 6",
 			Description: "Description 6",
@@ -58,7 +52,6 @@ var (
 			BoardID:     1,
 		},
 		{
-			PinID:       7,
 			AuthorID:    1,
 			Title:       "Pin 7",
 			Description: "Description 7",
@@ -66,7 +59,6 @@ var (
 			BoardID:     1,
 		},
 		{
-			PinID:       8,
 			AuthorID:    1,
 			Title:       "Pin 8",
 			Description: "Description 8",
@@ -74,7 +66,6 @@ var (
 			BoardID:     1,
 		},
 		{
-			PinID:       9,
 			AuthorID:    1,
 			Title:       "Pin 9",
 			Description: "Description 9",
@@ -82,7 +73,6 @@ var (
 			BoardID:     1,
 		},
 		{
-			PinID:       10,
 			AuthorID:    1,
 			Title:       "Pin 10",
 			Description: "Description 10",
@@ -90,7 +80,6 @@ var (
 			BoardID:     1,
 		},
 		{
-			PinID:       11,
 			AuthorID:    1,
 			Title:       "Pin 11",
 			Description: "Description 11",
@@ -98,7 +87,6 @@ var (
 			BoardID:     1,
 		},
 		{
-			PinID:       12,
 			AuthorID:    1,
 			Title:       "Pin 12",
 			Description: "Description 12",
@@ -106,7 +94,6 @@ var (
 			BoardID:     1,
 		},
 		{
-			PinID:       13,
 			AuthorID:    1,
 			Title:       "Pin 13",
 			Description: "Description 13",
@@ -114,7 +101,6 @@ var (
 			BoardID:     1,
 		},
 		{
-			PinID:       14,
 			AuthorID:    1,
 			Title:       "Pin 14",
 			Description: "Description 14",
@@ -122,7 +108,6 @@ var (
 			BoardID:     1,
 		},
 		{
-			PinID:       15,
 			AuthorID:    1,
 			Title:       "Pin 15",
 			Description: "Description 15",
@@ -151,7 +136,7 @@ func Feed(w http.ResponseWriter, r *http.Request) {
 
 	feed := models.NewFeed(pins)
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 
 	if err := json.NewEncoder(w).Encode(feed); err != nil {
 		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
