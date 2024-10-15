@@ -2,18 +2,18 @@ package models
 
 import (
 	"html"
+	"pinset/internal/errors"
 	"time"
-	"youpin/internal/errors"
 )
 
 type Comment struct {
-	CommentID    uint64    `json:"comment_id"`
-	PinID        uint64    `json:"pin_id"`
-	AuthorID     uint64    `json:"author_id"`
-	Body         string    `json:"body"`
-	Likes        []Like    `json:"likes"`
-	CreationTime time.Time `json:"creation_time"`
-	UpdateTime   time.Time `json:"update_time"`
+	CommentID    uint64     `json:"comment_id"`
+	PinID        uint64     `json:"pin_id"`
+	AuthorID     uint64     `json:"author_id"`
+	Body         string     `json:"body"`
+	Bookmarks    []Bookmark `json:"bookmarks"`
+	CreationTime time.Time  `json:"creation_time"`
+	UpdateTime   time.Time  `json:"update_time"`
 }
 
 func (c *Comment) Sanitize() {

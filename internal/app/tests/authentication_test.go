@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"pinset/internal/models/request"
 	"testing"
-	"youpin/internal/handlers"
-	"youpin/internal/models/request"
 
 	"github.com/stretchr/testify/require"
 )

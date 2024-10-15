@@ -1,10 +1,10 @@
-package handlers
+package delivery
 
 import (
 	"encoding/json"
 	"net/http"
-	internal_errors "youpin/internal/errors"
-	"youpin/internal/models"
+	internal_errors "pinset/internal/errors"
+	"pinset/internal/models"
 )
 
 var (
@@ -121,7 +121,7 @@ func Feed(w http.ResponseWriter, r *http.Request) {
 	header := w.Header()
 	header.Add("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
 	header.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
-	w.Header().Set("Access-Control-Allow-Origin", "http://37.139.41.77:3000")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 	if r.Method == "OPTIONS" {

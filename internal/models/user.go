@@ -5,8 +5,8 @@ import (
 	"net/mail"
 	"time"
 
-	"youpin/internal/errors"
-	"youpin/pkg/utils"
+	"pinset/internal/errors"
+	"pinset/pkg/utils"
 )
 
 const (

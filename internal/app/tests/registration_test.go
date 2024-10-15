@@ -6,12 +6,11 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	internal_errors "pinset/internal/errors"
+	"pinset/internal/models"
+	"pinset/internal/models/request"
 	"testing"
 	"time"
-	internal_errors "youpin/internal/errors"
-	"youpin/internal/handlers"
-	"youpin/internal/models"
-	"youpin/internal/models/request"
 
 	"github.com/stretchr/testify/require"
 )

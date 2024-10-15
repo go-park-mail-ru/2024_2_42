@@ -2,10 +2,10 @@ package tests
 
 import (
 	"errors"
+	internal_errors "pinset/internal/errors"
+	"pinset/internal/models"
 	"testing"
 	"time"
-	internal_errors "youpin/internal/errors"
-	"youpin/internal/models"
 )
 
 func TestUserValied(t *testing.T) {

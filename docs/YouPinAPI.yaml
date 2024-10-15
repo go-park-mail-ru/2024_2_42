@@ -4,7 +4,7 @@ info:
   description: "This is API-docs of backend server of Harmonica team."
   version: "1.0.0"
 servers:
-- url: https://api.youpin.ru/
+- url: https://api.pinset.ru/
 
 paths:
   /is_authorized:
@@ -178,7 +178,7 @@ paths:
       tags:
         - Content
       summary: "Resolve pins feed"
-      description: "Returns an array of objects with image data, including the number of likes and comments."
+      description: "Returns an array of objects with image data, including the number of bookmarks and comments."
       parameters:
         - name: "limit"
           in: query
@@ -190,7 +190,7 @@ paths:
           
       responses:
         '200':
-          description: "Successful answer. Returns map of pins with number of likes and comments"
+          description: "Successful answer. Returns map of pins with number of bookmarks and comments"
           content:
             application/json:
               schema:
@@ -209,9 +209,9 @@ paths:
                         pin_url:
                           type: string
                           description: "Pin's url"
-                        pin_likes:
+                        pin_bookmarks:
                           type: integer
-                          description: "Number of likes"
+                          description: "Number of bookmarks"
                         pin_comments:
                           type: integer
                           description: "Number of comments"

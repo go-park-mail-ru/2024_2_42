@@ -4,9 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"testing"
-	"youpin/internal/handlers" // Импортируем пакет, где определена функция Feed
-	"youpin/internal/models"   // Импортируем пакет, где определены модели данных
+	"pinset/internal/models" // Импортируем пакет, где определены модели данных
+	"testing"                // Импортируем пакет, где определена функция Feed
 
 	"github.com/stretchr/testify/assert"
 )

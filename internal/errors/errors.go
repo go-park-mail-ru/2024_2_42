@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"youpin/internal/models/response"
+	"pinset/internal/models/response"
 )
 
 type ErrorInfo struct {

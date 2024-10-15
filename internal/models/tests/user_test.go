@@ -2,9 +2,9 @@ package tests
 
 import (
 	"errors"
+	internal_errors "pinset/internal/errors"
+	"pinset/internal/models"
 	"testing"
-	internal_errors "youpin/internal/errors"
-	"youpin/internal/models"
 )
 
 func TestPinValid(t *testing.T) {

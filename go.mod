@@ -1,4 +1,4 @@
-module youpin
+module pinset
 
 go 1.22.5
 

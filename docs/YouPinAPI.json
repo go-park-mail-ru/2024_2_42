@@ -7,7 +7,7 @@
     },
     "servers": [
       {
-        "url": "https://api.youpin.ru/"
+        "url": "https://api.pinset.ru/"
       }
     ],
     "paths": {
@@ -244,7 +244,7 @@
         "get": {
           "tags": ["Content"],
           "summary": "Resolve pins feed",
-          "description": "Returns an array of objects with image data, including the number of likes and comments.",
+          "description": "Returns an array of objects with image data, including the number of bookmarks and comments.",
           "parameters": [
             {
               "name": "limit",
@@ -259,7 +259,7 @@
           ],
           "responses": {
             "200": {
-              "description": "Successful answer. Returns map of pins with number of likes and comments",
+              "description": "Successful answer. Returns map of pins with number of bookmarks and comments",
               "content": {
                 "application/json": {
                   "schema": {
@@ -281,9 +281,9 @@
                               "type": "string",
                               "description": "Pin's URL"
                             },
-                            "pin_likes": {
+                            "pin_bookmarks": {
                               "type": "integer",
-                              "description": "Number of likes"
+                              "description": "Number of bookmarks"
                             },
                             "pin_comments": {
                               "type": "integer",
