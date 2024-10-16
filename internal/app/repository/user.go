@@ -1,8 +1,14 @@
 package repository
 
 import (
+	internal_errors "pinset/internal/errors"
 	"pinset/internal/models"
+	"sync"
 	"time"
+)
+
+var (
+	nextUserID uint64 = 2
 )
 
 func NewUserRepository() UserRepository {
@@ -24,23 +30,42 @@ func NewUserRepository() UserRepository {
 				UpdateTime:   time.Now(),
 			},
 		},
+		mu: &sync.RWMutex{},
+		sm: NewSessionManager(),
 	}
 }
 
-func (urc *UserRepositoryController) UserAlreadySignedUp(u models.User) bool {
+func (urc *UserRepositoryController) Insert(user *models.User) error {
+	user.UserID = nextUserID
+	nextUserID++
+
 	urc.mu.Lock()
 	defer urc.mu.Unlock()
 
-	_, ok := urc.db[u.Email]
+	// User is already in database
+	if _, ok := urc.db[user.Email]; ok {
+		return internal_errors.ErrUserAlreadyRegistered
+	}
 
-	return ok
+	urc.db[user.Email] = user
+
+	return nil
 }
 
-func (urc *UserRepositoryController) GetUserId(u models.User) uint64 {
+func (urc *UserRepositoryController) UserAlreadySignedUp(user models.User) bool {
 	urc.mu.Lock()
 	defer urc.mu.Unlock()
 
-	if dbUser, ok := urc.db[u.Email]; !ok {
+	u, ok := urc.db[user.Email]
+
+	return ok && u.Password == user.Password
+}
+
+func (urc *UserRepositoryController) GetUserId(user models.User) uint64 {
+	urc.mu.Lock()
+	defer urc.mu.Unlock()
+
+	if dbUser, ok := urc.db[user.Email]; !ok {
 		return 0
 	} else {
 		return dbUser.UserID
@@ -49,4 +74,8 @@ func (urc *UserRepositoryController) GetUserId(u models.User) uint64 {
 
 func (urc *UserRepositoryController) UserHasActiveSession(token string) bool {
 	return urc.sm.Exists(token)
+}
+
+func (urc *UserRepositoryController) Session() *SessionsManager {
+	return urc.sm
 }

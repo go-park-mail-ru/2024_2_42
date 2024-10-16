@@ -2,10 +2,13 @@ package repository
 
 import (
 	"pinset/internal/models"
+	"sync"
 )
 
 func NewFeedRepository() FeedRepository {
-	return &FeedRepositoryController{}
+	return &FeedRepositoryController{
+		mu: &sync.RWMutex{},
+	}
 }
 
 var (

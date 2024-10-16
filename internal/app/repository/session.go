@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"net/http"
 	"os"
 	"sync"
 	"time"
@@ -16,7 +15,14 @@ type SessionsManager struct {
 	data map[string]uint64
 }
 
-func (sm *SessionsManager) Create(w http.ResponseWriter, id uint64, token string) {
+func NewSessionManager() *SessionsManager {
+	return &SessionsManager{
+		mu:   &sync.RWMutex{},
+		data: make(map[string]uint64),
+	}
+}
+
+func (sm *SessionsManager) Create(token string, id uint64) {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 

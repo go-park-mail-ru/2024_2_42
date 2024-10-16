@@ -8,14 +8,16 @@ import (
 // Interfaces
 type (
 	UserRepository interface {
+		Insert(*models.User) error
 		UserHasActiveSession(string) bool
 		UserAlreadySignedUp(models.User) bool
 		GetUserId(models.User) uint64
+		Session() *SessionsManager
 	}
 
 	FeedRepository interface {
 		GetPins() []models.Pin
-		InsertPin(pin models.Pin)
+		InsertPin(models.Pin)
 	}
 )
 

@@ -13,25 +13,25 @@ import (
 )
 
 func main() {
-	routerParams := configs.NewInternalParams()
-
-	router := mux.NewRouter()
-
 	// User Layer
 	userRepo := repository.NewUserRepository()
 	userUsecase := usecase.NewUserUsecase(userRepo)
-	userDelivery := delivery.NewUserDelivery(userUsecase, router)
+	userDelivery := delivery.NewUserDelivery(userUsecase)
 
 	// Feed layer
 	feedRepo := repository.NewFeedRepository()
 	feedUsecase := usecase.NewFeedUsecase(feedRepo)
-	feedDelivery := delivery.NewFeedDelivery(feedUsecase, router)
+	feedDelivery := delivery.NewFeedDelivery(feedUsecase)
 
-	// router.HandleFunc("/", handlers.Feed)
-	// router.HandleFunc("/login", handlers.LogIn)
-	// router.HandleFunc("/logout", handlers.LogOut)
-	// router.HandleFunc("/is_authorized", handlers.IsAuthorized)
-	// router.HandleFunc("/signup", handlers.SignUp)
+	// Routings handler
+	routerParams := configs.NewInternalParams()
+	router := mux.NewRouter()
+
+	router.HandleFunc("/", feedDelivery.Feed)
+	router.HandleFunc("/login", userDelivery.LogIn)
+	router.HandleFunc("/logout", userDelivery.LogOut)
+	router.HandleFunc("/signup", userDelivery.SignUp)
+	router.HandleFunc("/is_authorized", userDelivery.IsAuthorized)
 
 	fmt.Printf("starting server at %s\n", routerParams.MainServerPort)
 	log.Fatal(http.ListenAndServe(routerParams.MainServerPort, router))

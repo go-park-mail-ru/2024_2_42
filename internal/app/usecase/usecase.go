@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"net/http"
 	"pinset/internal/app/repository"
 	"pinset/internal/models"
 	"pinset/internal/models/request"
@@ -10,9 +9,10 @@ import (
 // Interfaces
 type (
 	UserUsecase interface {
-		LogIn(http.ResponseWriter, request.LoginRequest) error
+		LogIn(request.LoginRequest) (string, error)
 		LogOut(string) error
-		IsAuthorized(*http.Cookie) (float64, error)
+		SignUp(user *models.User) error
+		IsAuthorized(string) (float64, error)
 	}
 
 	FeedUsecase interface {
@@ -24,7 +24,6 @@ type (
 type (
 	userUsecaseController struct {
 		repo repository.UserRepository
-		sm   *repository.SessionsManager
 	}
 
 	feedUsecaseController struct {
