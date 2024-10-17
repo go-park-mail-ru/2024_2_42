@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"pinset/internal/models/request"
+	"pinset/internal/app/models/request"
 	"testing"
 
 	"github.com/stretchr/testify/require"

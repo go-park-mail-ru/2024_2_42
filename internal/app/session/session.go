@@ -1,14 +1,8 @@
-package repository
+package session
 
 import (
-	"os"
 	"sync"
-	"time"
 )
-
-const SessionTokenExpirationTime = time.Hour * 72
-
-var SECRET = []byte(os.Getenv("JWT_SECRET"))
 
 type SessionsManager struct {
 	mu   *sync.RWMutex

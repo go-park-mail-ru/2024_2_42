@@ -4,21 +4,18 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"pinset/internal/app/usecase"
+	"pinset/internal/app/models"
+	"pinset/internal/app/models/request"
+	"pinset/internal/app/models/response"
 	internal_errors "pinset/internal/errors"
-	"pinset/internal/models"
-	"pinset/internal/models/request"
-	"pinset/internal/models/response"
 	"time"
 )
 
-const respSignUpSuccessMesssage = "You successfully signed up!"
+const (
+	respSignUpSuccessMesssage = "You successfully signed up!"
 
-func NewUserDelivery(usecase usecase.UserUsecase) UserDelivery {
-	return &UserDeliveryController{
-		usecase: usecase,
-	}
-}
+	SessionTokenCookieKey = "session_token"
+)
 
 func (udc *UserDeliveryController) LogIn(w http.ResponseWriter, r *http.Request) {
 	header := w.Header()
@@ -48,7 +45,7 @@ func (udc *UserDeliveryController) LogIn(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	signedToken, err := udc.usecase.LogIn(req)
+	signedToken, err := udc.Usecase.LogIn(req)
 	if err != nil {
 		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
 			Internal: err,
@@ -57,7 +54,7 @@ func (udc *UserDeliveryController) LogIn(w http.ResponseWriter, r *http.Request)
 	}
 
 	cookie := &http.Cookie{
-		Name:     "session_token",
+		Name:     SessionTokenCookieKey,
 		Value:    signedToken,
 		HttpOnly: true,
 		Secure:   true,
@@ -90,7 +87,7 @@ func (udc *UserDeliveryController) LogOut(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = udc.usecase.LogOut(c.Value)
+	err = udc.Usecase.LogOut(c.Value)
 	if err != nil {
 		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
 			Internal: err,
@@ -135,7 +132,7 @@ func (udc *UserDeliveryController) SignUp(w http.ResponseWriter, r *http.Request
 
 	user.Sanitize()
 
-	err = udc.usecase.SignUp(&user)
+	err = udc.Usecase.SignUp(&user)
 	if err != nil {
 		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
 			Internal: err,
@@ -167,7 +164,7 @@ func (udc *UserDeliveryController) IsAuthorized(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	uid, err := udc.usecase.IsAuthorized(cookie.Value)
+	uid, err := udc.Usecase.IsAuthorized(cookie.Value)
 	if err == nil {
 		SendIsAuthResponse(w, response.IsAuthResponse{
 			UserID: uid,

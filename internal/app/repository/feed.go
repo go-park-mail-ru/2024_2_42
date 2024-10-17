@@ -1,11 +1,12 @@
 package repository
 
 import (
-	"pinset/internal/models"
+	"pinset/internal/app/models"
+	"pinset/internal/app/usecase"
 	"sync"
 )
 
-func NewFeedRepository() FeedRepository {
+func NewFeedRepository() usecase.FeedRepository {
 	return &FeedRepositoryController{
 		mu: &sync.RWMutex{},
 	}

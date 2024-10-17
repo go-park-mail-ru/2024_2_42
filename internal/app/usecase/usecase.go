@@ -1,32 +1,35 @@
 package usecase
 
 import (
-	"pinset/internal/app/repository"
-	"pinset/internal/models"
-	"pinset/internal/models/request"
+	"pinset/configs"
+	"pinset/internal/app/models"
+	"pinset/internal/app/session"
 )
 
-// Interfaces
+// Repository interfaces
 type (
-	UserUsecase interface {
-		LogIn(request.LoginRequest) (string, error)
-		LogOut(string) error
-		SignUp(user *models.User) error
-		IsAuthorized(string) (float64, error)
+	UserRepository interface {
+		Insert(*models.User) error
+		UserHasActiveSession(string) bool
+		UserAlreadySignedUp(models.User) bool
+		GetUserId(models.User) uint64
+		Session() *session.SessionsManager
 	}
 
-	FeedUsecase interface {
-		Feed() models.Feed
+	FeedRepository interface {
+		GetPins() []models.Pin
+		InsertPin(models.Pin)
 	}
 )
 
 // Controllers
 type (
 	userUsecaseController struct {
-		repo repository.UserRepository
+		repo UserRepository
+		authParameters configs.AuthParams
 	}
 
 	feedUsecaseController struct {
-		repo repository.FeedRepository
+		repo FeedRepository
 	}
 )

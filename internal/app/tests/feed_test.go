@@ -3,7 +3,7 @@ package tests
 import (
 	"net/http"
 	"net/http/httptest"
-	"pinset/internal/models" // Импортируем пакет, где определены модели данных
+	"pinset/internal/app/models" // Импортируем пакет, где определены модели данных
 	"testing"                // Импортируем пакет, где определена функция Feed
 
 	"github.com/stretchr/testify/assert"

@@ -3,15 +3,8 @@ package delivery
 import (
 	"encoding/json"
 	"net/http"
-	"pinset/internal/app/usecase"
 	internal_errors "pinset/internal/errors"
 )
-
-func NewFeedDelivery(usecase usecase.FeedUsecase) FeedDelivery {
-	return &FeedDeliveryController{
-		usecase: usecase,
-	}
-}
 
 func (fdc *FeedDeliveryController) Feed(w http.ResponseWriter, r *http.Request) {
 	header := w.Header()
@@ -30,7 +23,7 @@ func (fdc *FeedDeliveryController) Feed(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	feed := fdc.usecase.Feed()
+	feed := fdc.Usecase.Feed()
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

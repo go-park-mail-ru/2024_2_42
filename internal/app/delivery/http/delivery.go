@@ -1,31 +1,31 @@
 package delivery
 
 import (
-	"net/http"
-	"pinset/internal/app/usecase"
+	"pinset/internal/app/models"
+	"pinset/internal/app/models/request"
 )
 
-// Interfaces
+// Usecase interfaces
 type (
-	UserDelivery interface {
-		LogIn(w http.ResponseWriter, r *http.Request)
-		LogOut(w http.ResponseWriter, r *http.Request)
-		SignUp(w http.ResponseWriter, r *http.Request)
-		IsAuthorized(w http.ResponseWriter, r *http.Request)
+	UserUsecase interface {
+		LogIn(request.LoginRequest) (string, error)
+		LogOut(string) error
+		SignUp(user *models.User) error
+		IsAuthorized(string) (float64, error)
 	}
 
-	FeedDelivery interface {
-		Feed(w http.ResponseWriter, r *http.Request)
+	FeedUsecase interface {
+		Feed() models.Feed
 	}
 )
 
 // Controllers
 type (
 	UserDeliveryController struct {
-		usecase usecase.UserUsecase
+		Usecase UserUsecase
 	}
 
 	FeedDeliveryController struct {
-		usecase usecase.FeedUsecase
+		Usecase FeedUsecase
 	}
 )

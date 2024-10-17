@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 	internal_errors "pinset/internal/errors"
-	"pinset/internal/models/response"
+	"pinset/internal/app/models/response"
 )
 
 func sendLogInResponse(w http.ResponseWriter, sr response.LogInResponse) {

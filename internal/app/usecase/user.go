@@ -1,9 +1,10 @@
 package usecase
 
 import (
-	"pinset/internal/app/repository"
-	"pinset/internal/models"
-	"pinset/internal/models/request"
+	"pinset/configs"
+	delivery "pinset/internal/app/delivery/http"
+	"pinset/internal/app/models"
+	"pinset/internal/app/models/request"
 	"time"
 
 	internal_errors "pinset/internal/errors"
@@ -11,9 +12,10 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-func NewUserUsecase(repo repository.UserRepository) UserUsecase {
+func NewUserUsecase(repo UserRepository) delivery.UserUsecase {
 	return &userUsecaseController{
-		repo: repo,
+		repo:           repo,
+		authParameters: configs.NewAuthParams(),
 	}
 }
 
@@ -38,10 +40,10 @@ func (uuc *userUsecaseController) LogIn(req request.LoginRequest) (string, error
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.UserID,
 		"login":   req.Email,
-		"exp":     time.Now().Add(repository.SessionTokenExpirationTime).Unix(),
+		"exp":     time.Now().Add(uuc.authParameters.SessionTokenExpirationTime).Unix(),
 	})
 
-	signedToken, err := token.SignedString(repository.SECRET)
+	signedToken, err := token.SignedString(uuc.authParameters.JwtSecret)
 	if err != nil {
 		return "", internal_errors.ErrCantSignSessionToken
 	}
@@ -87,7 +89,7 @@ func (uuc *userUsecaseController) IsAuthorized(token string) (float64, error) {
 	}
 
 	jwtToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
-		return repository.SECRET, nil
+		return uuc.authParameters.JwtSecret, nil
 	})
 
 	if err != nil {

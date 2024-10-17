@@ -1,11 +1,11 @@
 package usecase
 
 import (
-	"pinset/internal/app/repository"
-	"pinset/internal/models"
+	delivery "pinset/internal/app/delivery/http"
+	"pinset/internal/app/models"
 )
 
-func NewFeedUsecase(repo repository.FeedRepository) FeedUsecase {
+func NewFeedUsecase(repo FeedRepository) delivery.FeedUsecase {
 	return &feedUsecaseController{
 		repo: repo,
 	}

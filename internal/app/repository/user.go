@@ -1,8 +1,10 @@
 package repository
 
 import (
+	"pinset/internal/app/models"
+	"pinset/internal/app/session"
+	"pinset/internal/app/usecase"
 	internal_errors "pinset/internal/errors"
-	"pinset/internal/models"
 	"sync"
 	"time"
 )
@@ -11,7 +13,7 @@ var (
 	nextUserID uint64 = 2
 )
 
-func NewUserRepository() UserRepository {
+func NewUserRepository() usecase.UserRepository {
 	return &UserRepositoryController{
 		db: map[string]*models.User{
 			"example@test.com": {
@@ -31,7 +33,7 @@ func NewUserRepository() UserRepository {
 			},
 		},
 		mu: &sync.RWMutex{},
-		sm: NewSessionManager(),
+		sm: session.NewSessionManager(),
 	}
 }
 
@@ -76,6 +78,6 @@ func (urc *UserRepositoryController) UserHasActiveSession(token string) bool {
 	return urc.sm.Exists(token)
 }
 
-func (urc *UserRepositoryController) Session() *SessionsManager {
+func (urc *UserRepositoryController) Session() *session.SessionsManager {
 	return urc.sm
 }
