@@ -2,8 +2,8 @@ package models
 
 import (
 	"html"
+	"pinset/internal/errors"
 	"time"
-	"youpin/internal/errors"
 )
 
 type Section struct {

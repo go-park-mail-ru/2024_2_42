@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"youpin/internal/models/response"
+	"pinset/internal/app/models/response"
 )
 
 type ErrorInfo struct {
@@ -63,19 +63,19 @@ var ErrorMapping = map[error]struct {
 	ErrBadRequest: {HttpCode: 400, InternalCode: 6},
 
 	ErrInvalidOrMissingRequestBody: {HttpCode: 400, InternalCode: 7},
-	ErrMethodIsNotAllowed:          {HttpCode: 405, InternalCode: 8},
+	ErrMethodIsNotAllowed:          {HttpCode: 400, InternalCode: 8},
 	ErrCantSignSessionToken:        {HttpCode: 500, InternalCode: 9},
 	ErrCantProcessFormData:         {HttpCode: 500, InternalCode: 10},
 
-	ErrUserAlreadyRegistered: {HttpCode: 403, InternalCode: 11},
-	ErrUserAlreadyAuthorized: {HttpCode: 403, InternalCode: 12},
+	ErrUserAlreadyRegistered: {HttpCode: 400, InternalCode: 11},
+	ErrUserAlreadyAuthorized: {HttpCode: 400, InternalCode: 12},
 
-	ErrUserIsNotRegistered: {HttpCode: 403, InternalCode: 13},
-	ErrUserIsNotAuthorized: {HttpCode: 401, InternalCode: 14},
+	ErrUserIsNotRegistered: {HttpCode: 400, InternalCode: 13},
+	ErrUserIsNotAuthorized: {HttpCode: 400, InternalCode: 14},
 
 	ErrDuringLogOutOperation: {HttpCode: 500, InternalCode: 15},
 
-	ErrInvalidSessionToken: {HttpCode: 403, InternalCode: 16},
+	ErrInvalidSessionToken: {HttpCode: 400, InternalCode: 16},
 
 	// Feed
 	ErrFeedNotAccessible: {HttpCode: 500, InternalCode: 17},

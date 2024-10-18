@@ -18,7 +18,7 @@
 ### Ссылки
 ### [Фронтенд](https://github.com/frontend-park-mail-ru/2024_2_42)
 ### [Макет](https://www.figma.com/design/VvBMjOb3axMwpUuVEeKphI/42-🌌---Pinterest?node-id=0-1&node-type=canvas&t=C70s5PJoRRDr149R-0)
-### [Деплой](http://37.139.41.77:8079/)
+### [Деплой](http://localhost:8079/)
 
 ### Правила оформления Pull Requests
 1. Название ветки - строка вида `<TIKET_ID>-<feature-name>`, где `<TIKET_ID>` - id тикета в трекере, `<feature-name>` - краткое название выполняемой фичи/задачи.

@@ -2,22 +2,22 @@ package models
 
 import (
 	"html"
+	"pinset/internal/errors"
 	"time"
-	"youpin/internal/errors"
 )
 
 type Pin struct {
-	PinID        uint64    `json:"pin_id"`
-	AuthorID     uint64    `json:"author_id"`
-	Title        string    `json:"title"`
-	Description  string    `json:"description"`
-	MediaUrl     string    `json:"media_url"`
-	RelatedLink  string    `json:"related_link"`
-	BoardID      uint64    `json:"board_id"`
-	Commentaries []Comment `json:"commentaries"`
-	Likes        []Like    `json:"likes"`
-	CreationTime time.Time `json:"creation_time"`
-	UpdateTime   time.Time `json:"update_time"`
+	PinID        uint64     `json:"pin_id"`
+	AuthorID     uint64     `json:"author_id"`
+	Title        string     `json:"title"`
+	Description  string     `json:"description"`
+	MediaUrl     string     `json:"media_url"`
+	RelatedLink  string     `json:"related_link"`
+	BoardID      uint64     `json:"board_id"`
+	Commentaries []Comment  `json:"commentaries"`
+	Bookmarks    []Bookmark `json:"bookmarks"`
+	CreationTime time.Time  `json:"creation_time"`
+	UpdateTime   time.Time  `json:"update_time"`
 }
 
 func (p *Pin) Sanitize() {

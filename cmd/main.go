@@ -1,9 +1,9 @@
 package main
 
 import (
-	"youpin/internal/router"
+	"pinset/internal/app/routing"
 )
 
 func main() {
-	router.Router()
+	routing.Route()
 }

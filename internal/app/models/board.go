@@ -4,7 +4,7 @@ import (
 	"html"
 	"time"
 
-	"youpin/internal/errors"
+	"pinset/internal/errors"
 )
 
 type Board struct {
