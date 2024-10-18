@@ -3,6 +3,6 @@ services:
     container_name: mainService
     build:
       context: .
-      dockerfile: ./build/DockerfileMain
+      dockerfile: ./build/Dockerfile
     ports:
       - '8080:8080'
