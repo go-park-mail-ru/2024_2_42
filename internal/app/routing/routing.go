@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"pinset/configs"
 	delivery "pinset/internal/app/delivery/http"
+	"pinset/internal/app/middleware"
 	"pinset/internal/app/repository"
 	"pinset/internal/app/usecase"
 
@@ -63,10 +64,14 @@ func Route() {
 	// Routings handler
 	routerParams := configs.NewInternalParams()
 	router := mux.NewRouter()
+	
+	mux := middleware.CORS(router)
+	mux = middleware.RequestID(mux)
+	mux = middleware.Panic(mux)
 
 	InitializeUserDeliveryLayer(router)
 	InitializeFeedDeliveryLayer(router)
 
 	fmt.Printf("starting server at %s\n", routerParams.MainServerPort)
-	log.Fatal(http.ListenAndServe(routerParams.MainServerPort, router))
+	log.Fatal(http.ListenAndServe(routerParams.MainServerPort, mux))
 }
