@@ -9,8 +9,6 @@ import (
 	"pinset/internal/app/middleware"
 	"pinset/internal/app/repository"
 	"pinset/internal/app/usecase"
-
-	"github.com/gorilla/mux"
 )
 
 // Interfaces
@@ -34,15 +32,28 @@ func NewUserDelivery(usecase delivery.UserUsecase) UserDelivery {
 }
 
 // User handlers layer
-func InitializeUserDeliveryLayer(router *mux.Router) {
+func InitializeUserDeliveryLayer(mux *http.ServeMux) {
 	userRepo := repository.NewUserRepository()
 	userUsecase := usecase.NewUserUsecase(userRepo)
 	userDelivery := NewUserDelivery(userUsecase)
 
-	router.HandleFunc("/login", userDelivery.LogIn)
-	router.HandleFunc("/logout", userDelivery.LogOut)
-	router.HandleFunc("/signup", userDelivery.SignUp)
-	router.HandleFunc("/is_authorized", userDelivery.IsAuthorized)
+	authRequiredRoutes := map[string]http.HandlerFunc{
+		"POST /logout": userDelivery.LogOut,
+	}
+
+	authNotRequiredRoutes := map[string]http.HandlerFunc{
+		"POST /login":        userDelivery.LogIn,
+		"POST /signup":       userDelivery.SignUp,
+		"GET /is_authorized": userDelivery.IsAuthorized,
+	}
+
+	for route, handler := range authRequiredRoutes {
+		mux.HandleFunc(route, middleware.RequiredAuthorization(userUsecase, handler))
+	}
+
+	for route, handler := range authNotRequiredRoutes {
+		mux.HandleFunc(route, middleware.NotRequiredAuthorization(userUsecase, handler))
+	}
 }
 
 func NewFeedDelivery(usecase delivery.FeedUsecase) FeedDelivery {
@@ -52,26 +63,27 @@ func NewFeedDelivery(usecase delivery.FeedUsecase) FeedDelivery {
 }
 
 // Feed handlers layer
-func InitializeFeedDeliveryLayer(router *mux.Router) {
+func InitializeFeedDeliveryLayer(router *http.ServeMux) {
 	feedRepo := repository.NewFeedRepository()
 	feedUsecase := usecase.NewFeedUsecase(feedRepo)
 	feedDelivery := NewFeedDelivery(feedUsecase)
 
-	router.HandleFunc("/", feedDelivery.Feed)
+	router.HandleFunc("/feed", feedDelivery.Feed)
 }
 
+// Routings handler
 func Route() {
-	// Routings handler
 	routerParams := configs.NewInternalParams()
-	router := mux.NewRouter()
-	
-	mux := middleware.CORS(router)
-	mux = middleware.RequestID(mux)
-	mux = middleware.Panic(mux)
+	mux := http.NewServeMux()
 
-	InitializeUserDeliveryLayer(router)
-	InitializeFeedDeliveryLayer(router)
+	InitializeUserDeliveryLayer(mux)
+	InitializeFeedDeliveryLayer(mux)
+
+	server := http.Server{
+		Addr:    routerParams.MainServerPort,
+		Handler: middleware.CORS(middleware.RequestID(middleware.Panic(mux))),
+	}
 
 	fmt.Printf("starting server at %s\n", routerParams.MainServerPort)
-	log.Fatal(http.ListenAndServe(routerParams.MainServerPort, mux))
+	log.Fatal(server.ListenAndServe())
 }

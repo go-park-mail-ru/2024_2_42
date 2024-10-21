@@ -18,6 +18,9 @@ const (
 )
 
 func (udc *UserDeliveryController) LogIn(w http.ResponseWriter, r *http.Request) {
+	// Is user authorized?
+	c, _ := r.Cookie("session_token")
+
 	var req request.LoginRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -32,6 +35,10 @@ func (udc *UserDeliveryController) LogIn(w http.ResponseWriter, r *http.Request)
 			Internal: internal_errors.ErrUserDataInvalid,
 		})
 		return
+	}
+
+	if c != nil {
+		req.Token = c.Value
 	}
 
 	signedToken, err := udc.Usecase.LogIn(req)
@@ -58,10 +65,6 @@ func (udc *UserDeliveryController) LogIn(w http.ResponseWriter, r *http.Request)
 }
 
 func (udc *UserDeliveryController) LogOut(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		return
-	}
-
 	// Is user authorized?
 	c, err := r.Cookie("session_token")
 	if errors.Is(err, http.ErrNoCookie) {
@@ -119,10 +122,6 @@ func (udc *UserDeliveryController) SignUp(w http.ResponseWriter, r *http.Request
 }
 
 func (udc *UserDeliveryController) IsAuthorized(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		return
-	}
-
 	// Is user authorized?
 	cookie, err := r.Cookie("session_token")
 	if errors.Is(err, http.ErrNoCookie) {

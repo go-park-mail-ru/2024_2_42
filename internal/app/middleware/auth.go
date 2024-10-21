@@ -3,72 +3,82 @@ package middleware
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
+	delivery "pinset/internal/app/delivery/http"
+	internal_errors "pinset/internal/errors"
 )
 
-const UserIdKey = "user_id"
+type ctxUserIDKeyType string
 
-func SessionExists(r *http.Request, a auth.AuthorizationClient) (*http.Request, error) {
+const UserIdKey ctxUserIDKeyType = "user_id"
+
+func requestWithUserContext(r *http.Request, uc delivery.UserUsecase) (*http.Request, error) {
 	c, err := r.Cookie("session_token")
 	if err != nil {
 		return nil, err
 	}
+
 	sessionToken := c.Value
-	res, err := a.CheckSession(r.Context(), &auth.CheckSessionRequest{Session: sessionToken})
+
+	fmt.Println("Checking is authorized")
+
+	userId, err := uc.IsAuthorized(sessionToken)
 	if err != nil {
 		return nil, err
 	}
-	if !res.Valid {
-		return nil, errs.GetLocalErrorByCode[res.LocalError]
-	}
 
 	ctx := r.Context()
-	ctx = context.WithValue(ctx, UserIdKey, entity.UserID(res.UserId))
+	ctx = context.WithValue(ctx, UserIdKey, uint64(userId))
+
 	return r.WithContext(ctx), nil
 }
 
-func AuthRequired(a auth.AuthorizationClient, next http.HandlerFunc) http.HandlerFunc {
+func RequiredAuthorization(uc delivery.UserUsecase, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("X-CSRF-Token", csrf.Token(r))
-		w.Header().Set("Access-Control-Expose-Headers", "X-CSRF-Token")
-		requestId := r.Context().Value(RequestIDKey).(string)
-		request, err := SessionExists(r, a)
+		// requestId := r.Context().Value(RequestIDKey).(string)
+		request, err := requestWithUserContext(r, uc)
 		if err != nil {
-			if errs.ErrorCodes[err].HttpCode != 0 {
-				handler.WriteErrorResponse(w, l, requestId, errs.ErrorInfo{LocalErr: err})
+			if _, ok := internal_errors.ErrorMapping[err]; ok {
+				internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+					Internal: err,
+				})
 				return
 			}
 			if errors.Is(err, http.ErrNoCookie) {
-				handler.WriteErrorResponse(w, l, requestId, errs.ErrorInfo{LocalErr: errs.ErrUnauthorized})
+				internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+					Internal: internal_errors.ErrUserIsNotAuthorized,
+				})
 				return
 			}
-			handler.WriteErrorResponse(w, l, requestId, errs.ErrorInfo{GeneralErr: err, LocalErr: errs.ErrReadCookie})
+			internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+				General: err, Internal: internal_errors.ErrBadRequest,
+			})
 			return
 		}
+
 		next.ServeHTTP(w, request)
 	}
 }
 
-func NoAuthRequired(a auth.AuthorizationClient, next http.HandlerFunc) http.HandlerFunc {
+func NotRequiredAuthorization(uc delivery.UserUsecase, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		requestId := r.Context().Value(RequestIDKey).(string)
-		_, err := SessionExists(r, a)
-		if err != nil {
-			next.ServeHTTP(w, r)
+		// requestId := r.Context().Value(RequestIDKey).(string)
+		_, err := requestWithUserContext(r, uc)
+		if err != nil && !errors.Is(err, http.ErrNoCookie) {
+			fmt.Println("NotRequiredAuthorization")
+			if _, ok := internal_errors.ErrorMapping[err]; ok {
+				internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+					Internal: err,
+				})
+			} else {
+				internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+					General: err, Internal: internal_errors.ErrInternalServerError,
+				})
+			}
 			return
 		}
-		handler.WriteErrorResponse(w, l, requestId, errs.ErrorInfo{
-			LocalErr: errs.ErrAlreadyAuthorized,
-		})
-	}
-}
 
-func CheckAuth(a auth.AuthorizationClient, next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		request, err := SessionExists(r, a)
-		if err != nil {
-			request = r
-		}
-		next.ServeHTTP(w, request)
+		next.ServeHTTP(w, r)
 	}
 }

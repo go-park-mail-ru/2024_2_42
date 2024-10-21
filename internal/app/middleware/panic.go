@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+
+	internal_errors "pinset/internal/errors"
 )
 
 func Panic(next http.Handler) http.Handler {
@@ -11,7 +13,9 @@ func Panic(next http.Handler) http.Handler {
 		defer func() {
 			if err := recover(); err != nil {
 				fmt.Fprintln(os.Stdout, "Panic recovered!", r.URL.Path)
-				http.Error(w, "Internal server error", 500)
+				internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+					Internal: internal_errors.ErrInternalServerError,
+				})
 			}
 		}()
 
