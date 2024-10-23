@@ -20,7 +20,10 @@ func CORS(next http.Handler) http.Handler {
 			method := r.Header.Get("Access-Control-Request-Method")
 			if slices.Contains(originsAllowedList, origin) && slices.Contains(methodAllowedList, method) {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
+				w.Header().Set("Access-Control-Allow-Credentials", "true")
 				w.Header().Set("Access-Control-Allow-Methods", strings.Join(methodAllowedList, ", "))
+				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Accept")
+				w.WriteHeader(http.StatusOK)
 			}
 		} else {
 			// Обычный запрос
