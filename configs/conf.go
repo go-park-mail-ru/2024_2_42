@@ -28,3 +28,15 @@ func NewAuthParams() AuthParams {
 		JwtSecret:                  []byte(os.Getenv("JWT_SECRET")),
 	}
 }
+
+const filePath = "./logs/log.txt"
+
+type LoggerParams struct {
+	FilePath string
+}
+
+func NewLoggerParams() LoggerParams {
+	return LoggerParams{
+		FilePath: filePath,
+	}
+}

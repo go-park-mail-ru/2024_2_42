@@ -8,8 +8,10 @@ import (
 	delivery "pinset/internal/app/delivery/http"
 	"pinset/internal/app/repository"
 	"pinset/internal/app/usecase"
+	"pinset/pkg/logger"
 
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 // Interfaces
@@ -67,6 +69,12 @@ func Route() {
 	InitializeUserDeliveryLayer(router)
 	InitializeFeedDeliveryLayer(router)
 
-	fmt.Printf("starting server at %s\n", routerParams.MainServerPort)
+	err := logger.Logger()
+
+	if err != nil {
+		log.Fatal(fmt.Errorf("Route: %w", err))
+	}
+
+	logrus.WithField("starting server at ", routerParams.MainServerPort).Info()
 	log.Fatal(http.ListenAndServe(routerParams.MainServerPort, router))
 }
