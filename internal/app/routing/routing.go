@@ -31,20 +31,16 @@ func NewUserDelivery(usecase delivery.UserUsecase) UserDelivery {
 	}
 }
 
-// User handlers layer
-func InitializeUserDeliveryLayer(mux *http.ServeMux) {
-	userRepo := repository.NewUserRepository()
-	userUsecase := usecase.NewUserUsecase(userRepo)
-	userDelivery := NewUserDelivery(userUsecase)
-
+// User layer handlers
+func InitializeUserLayerRoutings(mux *http.ServeMux, userUsecase delivery.UserUsecase, userHandlers UserDelivery) {
 	authRequiredRoutes := map[string]http.HandlerFunc{
-		"POST /logout": userDelivery.LogOut,
+		"POST /logout": userHandlers.LogOut,
 	}
 
 	authNotRequiredRoutes := map[string]http.HandlerFunc{
-		"POST /login":        userDelivery.LogIn,
-		"POST /signup":       userDelivery.SignUp,
-		"GET /is_authorized": userDelivery.IsAuthorized,
+		"POST /login":        userHandlers.LogIn,
+		"POST /signup":       userHandlers.SignUp,
+		"GET /is_authorized": userHandlers.IsAuthorized,
 	}
 
 	for route, handler := range authRequiredRoutes {
@@ -62,13 +58,8 @@ func NewFeedDelivery(usecase delivery.FeedUsecase) FeedDelivery {
 	}
 }
 
-// Feed handlers layer
-func InitializeFeedDeliveryLayer(router *http.ServeMux) {
-	feedRepo := repository.NewFeedRepository()
-	feedUsecase := usecase.NewFeedUsecase(feedRepo)
-	feedDelivery := NewFeedDelivery(feedUsecase)
-
-	router.HandleFunc("/feed", feedDelivery.Feed)
+func InitializeFeedLayerRoutings(mux *http.ServeMux, userUsecase delivery.UserUsecase, feedHandlers FeedDelivery) {
+	mux.HandleFunc("/feed", middleware.NotRequiredAuthorization(userUsecase, feedHandlers.Feed))
 }
 
 // Routings handler
@@ -76,8 +67,15 @@ func Route() {
 	routerParams := configs.NewInternalParams()
 	mux := http.NewServeMux()
 
-	InitializeUserDeliveryLayer(mux)
-	InitializeFeedDeliveryLayer(mux)
+	userRepo := repository.NewUserRepository()
+	userUsecase := usecase.NewUserUsecase(userRepo)
+	userDelivery := NewUserDelivery(userUsecase)
+	InitializeUserLayerRoutings(mux, userUsecase, userDelivery)
+
+	feedRepo := repository.NewFeedRepository()
+	feedUsecase := usecase.NewFeedUsecase(feedRepo)
+	feedDelivery := NewFeedDelivery(feedUsecase)
+	InitializeFeedLayerRoutings(mux, userUsecase, feedDelivery)
 
 	server := http.Server{
 		Addr:    routerParams.MainServerPort,
