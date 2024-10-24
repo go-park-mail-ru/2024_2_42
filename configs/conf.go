@@ -2,8 +2,26 @@ package configs
 
 import (
 	"os"
+	"strconv"
 	"time"
 )
+
+func LookUpStringEnvVar(key, defaultValue string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+
+	return defaultValue
+}
+
+func LookUpBoolEnvVar(key string, defaultValue bool) bool {
+	valStr := LookUpStringEnvVar(key, "")
+	if val, err := strconv.ParseBool(valStr); err == nil {
+		return val
+	}
+
+	return defaultValue
+}
 
 type internalParams struct {
 	MainServerPort string

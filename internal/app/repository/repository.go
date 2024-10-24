@@ -4,6 +4,8 @@ import (
 	"pinset/internal/app/models"
 	"pinset/internal/app/session"
 	"sync"
+
+	"github.com/minio/minio-go"
 )
 
 // Controllers
@@ -16,5 +18,9 @@ type (
 
 	FeedRepositoryController struct {
 		mu *sync.RWMutex
+	}
+
+	MediaRepositoryController struct {
+		client *minio.Client
 	}
 )

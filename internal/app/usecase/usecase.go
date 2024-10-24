@@ -20,6 +20,11 @@ type (
 		GetPins() []models.Pin
 		InsertPin(models.Pin)
 	}
+
+	MediaRepository interface {
+		GetMedia(string, string) error
+		UploadMedia(string, string) error
+	}
 )
 
 // Controllers
