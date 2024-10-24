@@ -7,17 +7,6 @@ import (
 )
 
 func (fdc *FeedDeliveryController) Feed(w http.ResponseWriter, r *http.Request) {
-	header := w.Header()
-	header.Add("Access-Control-Allow-Methods", "GET")
-	header.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
-
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
 	if r.Method != "GET" {
 		w.Write([]byte("For now only GET method is allowed"))
 		return

@@ -6,10 +6,9 @@ import (
 	"net/http"
 	"pinset/configs"
 	delivery "pinset/internal/app/delivery/http"
+	"pinset/internal/app/middleware"
 	"pinset/internal/app/repository"
 	"pinset/internal/app/usecase"
-
-	"github.com/gorilla/mux"
 )
 
 // Interfaces
@@ -32,16 +31,25 @@ func NewUserDelivery(usecase delivery.UserUsecase) UserDelivery {
 	}
 }
 
-// User handlers layer
-func InitializeUserDeliveryLayer(router *mux.Router) {
-	userRepo := repository.NewUserRepository()
-	userUsecase := usecase.NewUserUsecase(userRepo)
-	userDelivery := NewUserDelivery(userUsecase)
+// User layer handlers
+func InitializeUserLayerRoutings(mux *http.ServeMux, userUsecase delivery.UserUsecase, userHandlers UserDelivery) {
+	authRequiredRoutes := map[string]http.HandlerFunc{
+		"POST /logout": userHandlers.LogOut,
+	}
 
-	router.HandleFunc("/login", userDelivery.LogIn)
-	router.HandleFunc("/logout", userDelivery.LogOut)
-	router.HandleFunc("/signup", userDelivery.SignUp)
-	router.HandleFunc("/is_authorized", userDelivery.IsAuthorized)
+	authNotRequiredRoutes := map[string]http.HandlerFunc{
+		"POST /login":        userHandlers.LogIn,
+		"POST /signup":       userHandlers.SignUp,
+		"GET /is_authorized": userHandlers.IsAuthorized,
+	}
+
+	for route, handler := range authRequiredRoutes {
+		mux.HandleFunc(route, middleware.RequiredAuthorization(userUsecase, handler))
+	}
+
+	for route, handler := range authNotRequiredRoutes {
+		mux.HandleFunc(route, middleware.NotRequiredAuthorization(userUsecase, handler))
+	}
 }
 
 func NewFeedDelivery(usecase delivery.FeedUsecase) FeedDelivery {
@@ -50,23 +58,31 @@ func NewFeedDelivery(usecase delivery.FeedUsecase) FeedDelivery {
 	}
 }
 
-// Feed handlers layer
-func InitializeFeedDeliveryLayer(router *mux.Router) {
+// Feed layer handlers
+func InitializeFeedLayerRoutings(mux *http.ServeMux, userUsecase delivery.UserUsecase, feedHandlers FeedDelivery) {
+	mux.HandleFunc("/feed", middleware.NotRequiredAuthorization(userUsecase, feedHandlers.Feed))
+}
+
+// Routings handler
+func Route() {
+	routerParams := configs.NewInternalParams()
+	mux := http.NewServeMux()
+
+	userRepo := repository.NewUserRepository()
+	userUsecase := usecase.NewUserUsecase(userRepo)
+	userDelivery := NewUserDelivery(userUsecase)
+	InitializeUserLayerRoutings(mux, userUsecase, userDelivery)
+
 	feedRepo := repository.NewFeedRepository()
 	feedUsecase := usecase.NewFeedUsecase(feedRepo)
 	feedDelivery := NewFeedDelivery(feedUsecase)
+	InitializeFeedLayerRoutings(mux, userUsecase, feedDelivery)
 
-	router.HandleFunc("/", feedDelivery.Feed)
-}
-
-func Route() {
-	// Routings handler
-	routerParams := configs.NewInternalParams()
-	router := mux.NewRouter()
-
-	InitializeUserDeliveryLayer(router)
-	InitializeFeedDeliveryLayer(router)
+	server := http.Server{
+		Addr:    routerParams.MainServerPort,
+		Handler: middleware.CORS(middleware.RequestID(middleware.Panic(mux))),
+	}
 
 	fmt.Printf("starting server at %s\n", routerParams.MainServerPort)
-	log.Fatal(http.ListenAndServe(routerParams.MainServerPort, router))
+	log.Fatal(server.ListenAndServe())
 }

@@ -3,7 +3,7 @@ package tests
 import (
 	"errors"
 	internal_errors "pinset/internal/errors"
-	"pinset/internal/models"
+	"pinset/internal/app/models"
 	"testing"
 )
 
