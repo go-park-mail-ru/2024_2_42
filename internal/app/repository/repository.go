@@ -21,6 +21,9 @@ type (
 	}
 
 	MediaRepositoryController struct {
-		client *minio.Client
+		client          *minio.Client
+		ImageBucketName string
+		VideoBucketName string
+		AudioBucketName string
 	}
 )

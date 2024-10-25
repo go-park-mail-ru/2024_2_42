@@ -13,13 +13,13 @@ import (
 )
 
 func NewUserUsecase(repo UserRepository) delivery.UserUsecase {
-	return &userUsecaseController{
+	return &UserUsecaseController{
 		repo:           repo,
 		authParameters: configs.NewAuthParams(),
 	}
 }
 
-func (uuc *userUsecaseController) LogIn(req request.LoginRequest) (string, error) {
+func (uuc *UserUsecaseController) LogIn(req request.LoginRequest) (string, error) {
 	user := models.User{
 		Email:    req.Email,
 		Password: req.Password,
@@ -53,7 +53,7 @@ func (uuc *userUsecaseController) LogIn(req request.LoginRequest) (string, error
 	return signedToken, nil
 }
 
-func (uuc *userUsecaseController) LogOut(token string) error {
+func (uuc *UserUsecaseController) LogOut(token string) error {
 	// Need to remove user from authorized list
 	if !uuc.repo.Session().Exists(token) {
 		return internal_errors.ErrUserIsNotAuthorized
@@ -64,7 +64,7 @@ func (uuc *userUsecaseController) LogOut(token string) error {
 	return nil
 }
 
-func (uuc *userUsecaseController) SignUp(user *models.User) error {
+func (uuc *UserUsecaseController) SignUp(user *models.User) error {
 	// Incorrect data given
 	if err := user.Valid(); err != nil {
 		return internal_errors.ErrUserDataInvalid
@@ -83,7 +83,7 @@ func (uuc *userUsecaseController) SignUp(user *models.User) error {
 	return nil
 }
 
-func (uuc *userUsecaseController) IsAuthorized(token string) (float64, error) {
+func (uuc *UserUsecaseController) IsAuthorized(token string) (float64, error) {
 	if !uuc.repo.UserHasActiveSession(token) {
 		return 0, internal_errors.ErrUserIsNotAuthorized
 	}

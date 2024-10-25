@@ -1,6 +1,7 @@
 package delivery
 
 import (
+	"mime/multipart"
 	"pinset/internal/app/models"
 	"pinset/internal/app/models/request"
 )
@@ -17,6 +18,11 @@ type (
 	FeedUsecase interface {
 		Feed() models.Feed
 	}
+
+	MediaUsecase interface {
+		GetMedia() error
+		UploadMedia(files []*multipart.FileHeader) error
+	}
 )
 
 // Controllers
@@ -27,5 +33,9 @@ type (
 
 	FeedDeliveryController struct {
 		Usecase FeedUsecase
+	}
+
+	MediaDeliveryController struct {
+		Usecase MediaUsecase
 	}
 )

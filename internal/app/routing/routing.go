@@ -25,6 +25,11 @@ type (
 	FeedDelivery interface {
 		Feed(w http.ResponseWriter, r *http.Request)
 	}
+
+	MediaDelivery interface {
+		GetMedia(w http.ResponseWriter, r *http.Request)
+		UploadMedia(w http.ResponseWriter, r *http.Request)
+	}
 )
 
 func NewUserDelivery(usecase delivery.UserUsecase) UserDelivery {

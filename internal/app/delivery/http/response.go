@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	internal_errors "pinset/internal/errors"
 	"pinset/internal/app/models/response"
+	internal_errors "pinset/internal/errors"
 )
 
 func sendLogInResponse(w http.ResponseWriter, sr response.LogInResponse) {
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
 
 	// Отправляем JSON-ответ
 	if err := json.NewEncoder(w).Encode(sr); err != nil {
@@ -23,8 +23,8 @@ func sendLogInResponse(w http.ResponseWriter, sr response.LogInResponse) {
 }
 
 func sendLogOutResponse(w http.ResponseWriter, lr response.LogOutResponse) {
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
 
 	// Отправляем JSON-ответ
 	if err := json.NewEncoder(w).Encode(lr); err != nil {
@@ -36,8 +36,8 @@ func sendLogOutResponse(w http.ResponseWriter, lr response.LogOutResponse) {
 }
 
 func SendSignUpResponse(w http.ResponseWriter, sr response.SignUpResponse) {
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(sr); err != nil {
 		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
@@ -57,4 +57,21 @@ func SendIsAuthResponse(w http.ResponseWriter, ar response.IsAuthResponse) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(respJSON)
+}
+
+func SendMediaUploadResponse(w http.ResponseWriter, mur response.MediaUploadResponse) {
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+
+	err := json.NewEncoder(w).Encode(mur)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInternalServerError,
+		})
+		return
+	}
+}
+
+func SendMediaResponse(w http.ResponseWriter, mr response.MediaResponse) {
+	w.WriteHeader(http.StatusOK)
 }
