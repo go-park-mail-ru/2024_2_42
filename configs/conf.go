@@ -29,7 +29,7 @@ func NewAuthParams() AuthParams {
 	}
 }
 
-const filePath = "./logs/log.txt"
+const filePath = "./logs/log.log"
 
 type LoggerParams struct {
 	FilePath string
