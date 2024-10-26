@@ -9,6 +9,10 @@ import (
 	"pinset/internal/app/middleware"
 	"pinset/internal/app/repository"
 	"pinset/internal/app/usecase"
+
+	"pinset/pkg/logger"
+
+	"github.com/gorilla/mux"
 )
 
 // Interfaces
@@ -82,7 +86,7 @@ func Route() {
 		Addr:    routerParams.MainServerPort,
 		Handler: middleware.CORS(middleware.RequestID(middleware.Panic(mux))),
 	}
-
+ 
 	fmt.Printf("starting server at %s\n", routerParams.MainServerPort)
 	log.Fatal(server.ListenAndServe())
 }
