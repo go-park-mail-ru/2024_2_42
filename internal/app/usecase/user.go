@@ -84,10 +84,6 @@ func (uuc *UserUsecaseController) SignUp(user *models.User) error {
 }
 
 func (uuc *UserUsecaseController) IsAuthorized(token string) (float64, error) {
-	if !uuc.repo.UserHasActiveSession(token) {
-		return 0, internal_errors.ErrUserIsNotAuthorized
-	}
-
 	jwtToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		return uuc.authParameters.JwtSecret, nil
 	})
@@ -98,6 +94,10 @@ func (uuc *UserUsecaseController) IsAuthorized(token string) (float64, error) {
 
 	if !jwtToken.Valid {
 		return 0, internal_errors.ErrInvalidSessionToken
+	}
+
+	if !uuc.repo.UserHasActiveSession(token) {
+		return 0, internal_errors.ErrUserIsNotAuthorized
 	}
 
 	if claims, ok := jwtToken.Claims.(jwt.MapClaims); ok {
