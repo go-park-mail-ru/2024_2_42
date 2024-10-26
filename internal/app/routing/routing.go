@@ -68,6 +68,14 @@ func InitializeFeedDeliveryLayer(router *mux.Router) {
 }
 
 func Route() {
+	// Logger 
+	logger, err := logger.Logger()
+	if err != nil {
+		log.Fatal(fmt.Errorf("Route: %w", err))
+	}
+
+	_ = logger
+
 	// Routings handler
 	routerParams := configs.NewInternalParams()
 	router := mux.NewRouter()
@@ -75,11 +83,6 @@ func Route() {
 	InitializeUserDeliveryLayer(router)
 	InitializeFeedDeliveryLayer(router)
 
-	err := logger.Logger()
-
-	if err != nil {
-		log.Fatal(fmt.Errorf("Route: %w", err))
-	}
 
 	logrus.WithField("starting server at ", routerParams.MainServerPort).Info()
 	log.Fatal(http.ListenAndServe(routerParams.MainServerPort, router))

@@ -23,7 +23,7 @@ func (mdc *MediaDeliveryController) UploadMedia(w http.ResponseWriter, r *http.R
 	contentType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil || !strings.HasPrefix(contentType, "multipart/") {
 		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
-			// General: err, Internal: internal_errors.Err,
+			General: err, Internal: internal_errors.ErrExpectedMultipartContentType,
 		})
 		return
 	}

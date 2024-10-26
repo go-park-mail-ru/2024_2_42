@@ -26,7 +26,8 @@ var (
 
 // Handlers
 var (
-	ErrBadRequest = errors.New("bad request")
+	ErrInternalServerError = errors.New("internal server error")
+	ErrBadRequest          = errors.New("bad request")
 
 	ErrInvalidOrMissingRequestBody = errors.New("тело запроса невалидно")
 	ErrMethodIsNotAllowed          = errors.New("метод не допустим")
@@ -46,6 +47,9 @@ var (
 
 	// Feed
 	ErrFeedNotAccessible = errors.New("ошибка при загрузке ленты")
+
+	// Media
+	ErrExpectedMultipartContentType = errors.New("запрос имеет Content-Type не multipart")
 )
 
 var ErrorMapping = map[error]struct {
@@ -60,25 +64,29 @@ var ErrorMapping = map[error]struct {
 	ErrBoardDataInvalid:   {HttpCode: 400, InternalCode: 5},
 
 	// Handlers
-	ErrBadRequest: {HttpCode: 400, InternalCode: 6},
+	ErrInternalServerError: {HttpCode: 500, InternalCode: 6},
+	ErrBadRequest:          {HttpCode: 400, InternalCode: 7},
 
-	ErrInvalidOrMissingRequestBody: {HttpCode: 400, InternalCode: 7},
-	ErrMethodIsNotAllowed:          {HttpCode: 400, InternalCode: 8},
-	ErrCantSignSessionToken:        {HttpCode: 500, InternalCode: 9},
-	ErrCantProcessFormData:         {HttpCode: 500, InternalCode: 10},
+	ErrInvalidOrMissingRequestBody: {HttpCode: 400, InternalCode: 8},
+	ErrMethodIsNotAllowed:          {HttpCode: 400, InternalCode: 9},
+	ErrCantSignSessionToken:        {HttpCode: 500, InternalCode: 10},
+	ErrCantProcessFormData:         {HttpCode: 500, InternalCode: 11},
 
-	ErrUserAlreadyRegistered: {HttpCode: 400, InternalCode: 11},
-	ErrUserAlreadyAuthorized: {HttpCode: 400, InternalCode: 12},
+	ErrUserAlreadyRegistered: {HttpCode: 400, InternalCode: 12},
+	ErrUserAlreadyAuthorized: {HttpCode: 400, InternalCode: 13},
 
-	ErrUserIsNotRegistered: {HttpCode: 400, InternalCode: 13},
-	ErrUserIsNotAuthorized: {HttpCode: 400, InternalCode: 14},
+	ErrUserIsNotRegistered: {HttpCode: 400, InternalCode: 14},
+	ErrUserIsNotAuthorized: {HttpCode: 400, InternalCode: 15},
 
-	ErrDuringLogOutOperation: {HttpCode: 500, InternalCode: 15},
+	ErrDuringLogOutOperation: {HttpCode: 500, InternalCode: 16},
 
-	ErrInvalidSessionToken: {HttpCode: 400, InternalCode: 16},
+	ErrInvalidSessionToken: {HttpCode: 400, InternalCode: 17},
 
 	// Feed
-	ErrFeedNotAccessible: {HttpCode: 500, InternalCode: 17},
+	ErrFeedNotAccessible: {HttpCode: 500, InternalCode: 18},
+
+	// Media
+	ErrExpectedMultipartContentType: {HttpCode: 400, InternalCode: 19},
 }
 
 func SendErrorResponse(w http.ResponseWriter, ei ErrorInfo) {
@@ -94,6 +102,7 @@ func SendErrorResponse(w http.ResponseWriter, ei ErrorInfo) {
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
+		http.Error(w, "Internal server error", 500)
 		return
 	}
 

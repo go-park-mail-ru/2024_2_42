@@ -47,7 +47,9 @@ func NewAuthParams() AuthParams {
 	}
 }
 
-const filePath = "./logs/log.log"
+const (
+	loggerfilePath = "./logs/pinset.log"
+)
 
 type LoggerParams struct {
 	FilePath string
@@ -55,6 +57,6 @@ type LoggerParams struct {
 
 func NewLoggerParams() LoggerParams {
 	return LoggerParams{
-		FilePath: filePath,
+		FilePath: loggerfilePath,
 	}
 }
