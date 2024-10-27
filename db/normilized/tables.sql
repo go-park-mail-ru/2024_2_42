@@ -1,6 +1,5 @@
-User DB:
-Таблица-хранилище пользователей.
-```
+-- User table:
+--Таблица-хранилище пользователей.
 CREATE TABLE IF NOT EXISTS "user" (
     user_id SERIAL PRIMARY KEY,
     user_name TEXT
@@ -26,10 +25,9 @@ CREATE TABLE IF NOT EXISTS "user" (
     creation_time TIMESTAMPTZ DEFAULT NOW(),
     update_time TIMESTAMPTZ DEFAULT NOW()
 );
-```
-Board DB:
-Таблица-хранилище досок, в которые можно сохранять пины.
-```
+
+-- Board table:
+-- Таблица-хранилище досок, в которые можно сохранять пины.
 CREATE TABLE IF NOT EXISTS board (
     board_id SERIAL PRIMARY KEY,
     owner_id INT REFERENCES "user"(user_id) 
@@ -46,10 +44,9 @@ CREATE TABLE IF NOT EXISTS board (
     creation_time TIMESTAMPTZ DEFAULT NOW(),
     update_time TIMESTAMPTZ DEFAULT NOW()
 );
-```
-Comment DB:
-Таблица-хранилище комментов пользователей под пинами.
-```
+
+-- Comment table:
+-- Таблица-хранилище комментов пользователей под пинами.
 CREATE TABLE IF NOT EXISTS comment (
     comment_id SERIAL PRIMARY KEY,
     pin_id INT REFERENCES pin(pin_id)
@@ -64,10 +61,9 @@ CREATE TABLE IF NOT EXISTS comment (
     creation_time TIMESTAMPTZ DEFAULT NOW(),
     update_time TIMESTAMPTZ DEFAULT NOW()
 );
-```
-Section DB:
-Таблица-хранилище разделов в досках для хранения пинов.
-```
+
+-- Section table:
+-- Таблица-хранилище разделов в досках для хранения пинов.
 CREATE TABLE IF NOT EXISTS section (
     section_id SERIAL PRIMARY KEY,
     board_id INT REFERENCES board(board_id)
@@ -81,12 +77,10 @@ CREATE TABLE IF NOT EXISTS section (
     creation_time TIMESTAMPTZ DEFAULT NOW(),
     update_time TIMESTAMPTZ DEFAULT NOW()
 );
-```
 
-Pin DB:
-Таблица-хранилище пинов.
-board_id указанный в атрибутах ссылается на закрытую доску пользователя.
-```
+-- Pin table:
+-- Таблица-хранилище пинов.
+-- board_id указанный в атрибутах ссылается на закрытую доску пользователя.
 CREATE TABLE IF NOT EXISTS pin (
     pin_id SERIAL PRIMARY KEY,
 	author_id INT REFERENCES "user"(user_id)
@@ -107,10 +101,9 @@ CREATE TABLE IF NOT EXISTS pin (
     creation_time TIMESTAMPTZ DEFAULT NOW(),
     update_time TIMESTAMPTZ DEFAULT NOW()
 );
-```
-Bookmark DB:
-Таблица хранилище пинов, сохраненных в закладки пользователя.
-```
+
+-- Bookmark table:
+-- Таблица хранилище пинов, сохраненных в закладки пользователя.
 CREATE TABLE IF NOT EXISTS bookmark (
     bookmark_id SERIAL PRIMARY KEY,
     pin_id INT REFERENCES pin(pin_id)
@@ -118,10 +111,9 @@ CREATE TABLE IF NOT EXISTS bookmark (
         NOT NULL,
     bookmark_time TIMESTAMPTZ
 );
-```
-Saved pin to board DB:
-Таблица-хранилище соответствия досок-сохраненных пинов.
-```
+
+-- Saved pin to board table:
+-- Таблица-хранилище соответствия досок-сохраненных пинов.
 CREATE TABLE IF NOT EXISTS saved_pin_to_board (
     board_id INT REFERENCES board(board_id)
         ON DELETE CASCADE
@@ -131,11 +123,10 @@ CREATE TABLE IF NOT EXISTS saved_pin_to_board (
         NOT NULL,
     PRIMARY KEY (board_id, pin_id)
 );
-```
 
-Saved pin to section DB:
-Таблица-хранилище соответствия разделов-сохраненных пинов.
-```
+
+--Saved pin to section table:
+--Таблица-хранилище соответствия разделов-сохраненных пинов.
 CREATE TABLE IF NOT EXISTS saved_pin_to_section (
     section_id INT REFERENCES section(section_id)
         ON DELETE CASCADE
@@ -145,10 +136,9 @@ CREATE TABLE IF NOT EXISTS saved_pin_to_section (
         NOT NULL,
     PRIMARY KEY (section_id, pin_id)
 );
-```
-Follower DB:
-Таблица-хранилище подписчиков и подписок.
-```
+
+-- Follower table:
+-- Таблица-хранилище подписчиков и подписок.
 CREATE TABLE IF NOT EXISTS follower (
     follower_id INT REFERENCES "user"(user_id)
         ON DELETE CASCADE
@@ -158,10 +148,9 @@ CREATE TABLE IF NOT EXISTS follower (
         NOT NULL,
     PRIMARY KEY (follower_id, following_id)
 );
-```
-Saved boards DB:
-Таблица-хранилище сохраненных досок пользователя.
-```
+
+-- Saved boards table:
+-- Таблица-хранилище сохраненных досок пользователя.
 CREATE TABLE IF NOT EXISTS saved_board (
     user_id INT REFERENCES "user"(user_id)
         ON DELETE CASCADE
@@ -171,6 +160,5 @@ CREATE TABLE IF NOT EXISTS saved_board (
         NOT NULL,
     PRIMARY KEY (user_id, board_id)
 );
-```
 
 
