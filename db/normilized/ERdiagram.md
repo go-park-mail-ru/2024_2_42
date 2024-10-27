@@ -22,7 +22,7 @@ erDiagram
         user_name(255) text "Length less than 255 symbs"
         nick_name(255) text "Uniq, length less than 255 symbs"
         email(255) text "Uniq, length less than 255 symbs"
-        password(8-24) text "Length more than 8 and less than 255"
+        password(8-24) text "Length more than 8 and less than 24"
         birth_date time
         gender(20) text "Length less than 20 symbs"
         avatar_url text
