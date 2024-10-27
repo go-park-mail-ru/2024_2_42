@@ -34,6 +34,7 @@ func CORS(next http.Handler) http.Handler {
 				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Accept")
 			}
 		}
+
 		next.ServeHTTP(w, r)
 	})
 }

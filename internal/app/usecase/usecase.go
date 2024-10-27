@@ -25,8 +25,8 @@ type (
 	MediaRepository interface {
 		GetBucketNameForContentType(fileType string) string
 		HasCorrectContentType(string) bool
-		GetMedia(string, string) error
-		UploadMedia(bucketName string, media io.Reader, mediaSize int64) (string, error)
+		GetMedia(string, string) ([]byte, error)
+		UploadMedia(string, string, io.Reader, int64) (string, error)
 	}
 )
 

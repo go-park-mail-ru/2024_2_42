@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"pinset/configs"
@@ -8,23 +9,22 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Logger() (*logrus.Logger, error) {
+func NewLogger() (*logrus.Logger, error) {
 	cfg := configs.NewLoggerParams()
 
 	logFile, err := os.OpenFile(cfg.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("logrus: %w", err)
 	}
 
-	logger := logrus.New()
-
-	logrus.SetFormatter(&logrus.JSONFormatter{
-		TimestampFormat: "2006-01-02 15:04:05",
-	})
-	logger.Level = logrus.DebugLevel
-
 	mw := io.MultiWriter(os.Stdout, logFile)
-	logrus.SetOutput(mw)
+	logger := &logrus.Logger{
+		Out:   mw,
+		Level: logrus.DebugLevel,
+		Formatter: &logrus.JSONFormatter{
+			TimestampFormat: "2006-01-02 15:04:05",
+		},
+	}
 
-	return logger, err
+	return logger, nil
 }

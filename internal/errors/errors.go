@@ -3,11 +3,11 @@ package errors
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
-	"os"
 
 	"pinset/internal/app/models/response"
+
+	"github.com/sirupsen/logrus"
 )
 
 type ErrorInfo struct {
@@ -50,6 +50,7 @@ var (
 
 	// Media
 	ErrExpectedMultipartContentType = errors.New("запрос имеет Content-Type не multipart")
+	ErrWrongMediaContentType = errors.New("загружаемое медиа имеет некорректный Content-Type")
 )
 
 var ErrorMapping = map[error]struct {
@@ -87,12 +88,29 @@ var ErrorMapping = map[error]struct {
 
 	// Media
 	ErrExpectedMultipartContentType: {HttpCode: 400, InternalCode: 19},
+	ErrWrongMediaContentType: {HttpCode: 400, InternalCode: 20},
 }
 
-func SendErrorResponse(w http.ResponseWriter, ei ErrorInfo) {
+func IsInternal(err error) bool {
+	_, ok := ErrorMapping[err]
+	return ok 
+}
+
+func SendErrorResponse(w http.ResponseWriter, logger *logrus.Logger, ei ErrorInfo) {
+	var generalErrorText, localErrorText string
+
 	if ei.General != nil {
-		fmt.Fprintf(os.Stdout, "error: %s\n", ei.General.Error())
+		generalErrorText = ei.General.Error()
 	}
+	if ei.Internal != nil {
+		localErrorText = ei.Internal.Error()
+	}
+
+	logger.WithFields(logrus.Fields{
+		"general_error":    generalErrorText,
+		"local_error":      localErrorText,
+		"local_error_code": ErrorMapping[ei.Internal].InternalCode,
+	}).Info("Error response")
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(ErrorMapping[ei.Internal].HttpCode)
@@ -101,13 +119,14 @@ func SendErrorResponse(w http.ResponseWriter, ei ErrorInfo) {
 		CodeStatus: ErrorMapping[ei.Internal].InternalCode, Message: ei.Internal.Error(),
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
+		logger.Error("Unpredicted error during sending error response")
 		http.Error(w, "Internal server error", 500)
 		return
 	}
 
 	_, err = w.Write(erJSON)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
+		logger.Error("Unpredicted error during sending error response")
+		http.Error(w, "Internal server error", 500)
 	}
 }

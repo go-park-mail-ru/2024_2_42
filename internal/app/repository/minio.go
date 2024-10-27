@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"fmt"
-	"os"
 	"pinset/configs/s3"
 
 	"github.com/minio/minio-go"
@@ -19,7 +17,6 @@ func NewMinioClient(config s3.MinioParams) (*minio.Client, error) {
 		Secure: config.UseSSL,
 	})
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
 		return nil, err
 	}
 
@@ -35,12 +32,14 @@ func NewMinioClient(config s3.MinioParams) (*minio.Client, error) {
 }
 
 func NewMinioBucket(minioClient *minio.Client, bucketName string) error {
-	_, err := minioClient.BucketExists(bucketName)
-	if err != nil {
-		return err
+	exists, _ := minioClient.BucketExists(bucketName)
+
+	// If exists then just return
+	if exists {
+		return nil
 	}
 
-	err = minioClient.MakeBucket(bucketName, minioBucketLocation)
+	err := minioClient.MakeBucket(bucketName, minioBucketLocation)
 	if err != nil {
 		return err
 	}

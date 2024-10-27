@@ -8,21 +8,23 @@ import (
 
 	"pinset/internal/app/models/response"
 	internal_errors "pinset/internal/errors"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
+	successfullGetMessage = "file extracted"
 	successfullUploadMessage = "file(s) successfully uploaded"
 )
 
 func (mdc *MediaDeliveryController) GetMedia(w http.ResponseWriter, r *http.Request) {
-	// w.Header().Set("Content-Type", w.FormDataContentType())
-	// SendMediaResponse()
+	// not implemented
 }
 
 func (mdc *MediaDeliveryController) UploadMedia(w http.ResponseWriter, r *http.Request) {
 	contentType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil || !strings.HasPrefix(contentType, "multipart/") {
-		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
 			General: err, Internal: internal_errors.ErrExpectedMultipartContentType,
 		})
 		return
@@ -30,23 +32,33 @@ func (mdc *MediaDeliveryController) UploadMedia(w http.ResponseWriter, r *http.R
 
 	err = r.ParseMultipartForm(32 * utils.MiB)
 	if err != nil {
-		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
 			General: err, Internal: internal_errors.ErrInternalServerError,
 		})
 		return
 	}
 
 	// fileHeaders are accessible only after ParseMultipartForm is called
-	fileChunks := r.MultipartForm.File["file"]
-	err = mdc.Usecase.UploadMedia(fileChunks)
+	files := r.MultipartForm.File["file"]
+	uploadedMediaIds, err := mdc.Usecase.UploadMedia(files)
 	if err != nil {
-		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
-			General: err, Internal: internal_errors.ErrInternalServerError,
-		})
+		if internal_errors.IsInternal(err) {
+			internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+				Internal: err,
+			})
+		} else {
+			internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+				General: err, Internal: internal_errors.ErrInternalServerError,
+			})
+		}
 		return
 	}
 
-	SendMediaUploadResponse(w, response.MediaUploadResponse{
+	mdc.Logger.WithFields(logrus.Fields{
+		"files": uploadedMediaIds,
+	}).Info("Upload successfull")
+
+	SendMediaUploadResponse(w, mdc.Logger, response.MediaUploadResponse{
 		Message: successfullUploadMessage,
 	})
 }

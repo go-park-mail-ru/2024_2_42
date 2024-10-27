@@ -4,6 +4,8 @@ import (
 	"mime/multipart"
 	"pinset/internal/app/models"
 	"pinset/internal/app/models/request"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Usecase interfaces
@@ -21,7 +23,7 @@ type (
 
 	MediaUsecase interface {
 		GetMedia() error
-		UploadMedia(files []*multipart.FileHeader) error
+		UploadMedia(files []*multipart.FileHeader) ([]string, error)
 	}
 )
 
@@ -29,13 +31,16 @@ type (
 type (
 	UserDeliveryController struct {
 		Usecase UserUsecase
+		Logger *logrus.Logger
 	}
 
 	FeedDeliveryController struct {
 		Usecase FeedUsecase
+		Logger *logrus.Logger
 	}
 
 	MediaDeliveryController struct {
 		Usecase MediaUsecase
+		Logger *logrus.Logger
 	}
 )

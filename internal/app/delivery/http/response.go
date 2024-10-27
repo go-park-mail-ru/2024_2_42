@@ -2,55 +2,57 @@ package delivery
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"os"
 	"pinset/internal/app/models/response"
 	internal_errors "pinset/internal/errors"
+
+	"github.com/sirupsen/logrus"
 )
 
-func sendLogInResponse(w http.ResponseWriter, sr response.LogInResponse) {
+func sendLogInResponse(w http.ResponseWriter, logger *logrus.Logger, sr response.LogInResponse) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 
 	// Отправляем JSON-ответ
 	if err := json.NewEncoder(w).Encode(sr); err != nil {
-		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+		internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
 			General: err, Internal: internal_errors.ErrCantProcessFormData,
 		})
 		return
 	}
 }
 
-func sendLogOutResponse(w http.ResponseWriter, lr response.LogOutResponse) {
+func sendLogOutResponse(w http.ResponseWriter, logger *logrus.Logger, lr response.LogOutResponse) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 
 	// Отправляем JSON-ответ
 	if err := json.NewEncoder(w).Encode(lr); err != nil {
-		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+		internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
 			General: err, Internal: internal_errors.ErrCantProcessFormData,
 		})
 		return
 	}
 }
 
-func SendSignUpResponse(w http.ResponseWriter, sr response.SignUpResponse) {
+func SendSignUpResponse(w http.ResponseWriter, logger *logrus.Logger, sr response.SignUpResponse) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(sr); err != nil {
-		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+		internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
 			General: err, Internal: internal_errors.ErrCantProcessFormData,
 		})
 		return
 	}
 }
 
-func SendIsAuthResponse(w http.ResponseWriter, ar response.IsAuthResponse) {
+func SendIsAuthResponse(w http.ResponseWriter, logger *logrus.Logger, ar response.IsAuthResponse) {
 	respJSON, err := json.Marshal(ar)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
+		internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInternalServerError,
+		})
 		return
 	}
 
@@ -59,19 +61,15 @@ func SendIsAuthResponse(w http.ResponseWriter, ar response.IsAuthResponse) {
 	w.Write(respJSON)
 }
 
-func SendMediaUploadResponse(w http.ResponseWriter, mur response.MediaUploadResponse) {
+func SendMediaUploadResponse(w http.ResponseWriter, logger *logrus.Logger, mur response.MediaUploadResponse) {
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
 
 	err := json.NewEncoder(w).Encode(mur)
 	if err != nil {
-		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+		internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
 			General: err, Internal: internal_errors.ErrInternalServerError,
 		})
 		return
 	}
-}
-
-func SendMediaResponse(w http.ResponseWriter, mr response.MediaResponse) {
-	w.WriteHeader(http.StatusOK)
 }

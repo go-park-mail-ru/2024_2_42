@@ -3,7 +3,7 @@ package repository
 import (
 	"fmt"
 	"io"
-	"os"
+	"path/filepath"
 	"pinset/configs/s3"
 	"pinset/internal/app/usecase"
 
@@ -12,16 +12,13 @@ import (
 )
 
 const (
-	// image
 	mimeImgJpegType = "image/jpeg"
 	mimeImgJpgType  = "image/jpg"
 	mimeImgPngType  = "image/png"
 	mimeImgGifType  = "image/gif"
 
-	// video
 	mimeVidMp4Type = "video/mp4"
 
-	// audio
 	mimeAudMp3Type = "audio/mpeg"
 	mimeAudAacType = "audio/aac"
 	mimeAudWavType = "audio/wav"
@@ -31,12 +28,11 @@ const (
 	minioUploadFileType = "application/octet-stream"
 )
 
-func NewMediaRepository() usecase.MediaRepository {
+func NewMediaRepository() (usecase.MediaRepository, error) {
 	config := s3.NewMinioParams()
 	client, err := NewMinioClient(config)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Can't create Minio client: %s\n", err.Error())
-		return nil
+		return nil, fmt.Errorf("minio client: %w", err)
 	}
 
 	return &MediaRepositoryController{
@@ -44,7 +40,7 @@ func NewMediaRepository() usecase.MediaRepository {
 		ImageBucketName: config.ImageBucketName,
 		VideoBucketName: config.VideoBucketName,
 		AudioBucketName: config.AudioBucketName,
-	}
+	}, nil
 }
 
 func (mrc *MediaRepositoryController) GetBucketNameForContentType(fileType string) string {
@@ -71,18 +67,13 @@ func (mrc *MediaRepositoryController) HasCorrectContentType(fileType string) boo
 		fileType == mimeAudWavType
 }
 
-func (mrc *MediaRepositoryController) GetMedia(bucketName, objectName string) error {
-	object, err := mrc.client.GetObject(bucketName, objectName, minio.GetObjectOptions{})
-	if err != nil {
-		return err
-	}
-	defer object.Close()
-
-	return nil
+func (mrc *MediaRepositoryController) GetMedia(bucketName, objectName string) ([]byte, error) {
+	// not implemented
+	return []byte{}, nil
 }
 
-func (mrc *MediaRepositoryController) UploadMedia(bucketName string, media io.Reader, mediaSize int64) (string, error) {
-	objectName := uuid.New().String()
+func (mrc *MediaRepositoryController) UploadMedia(bucketName, fileName string, media io.Reader, mediaSize int64) (string, error) {
+	objectName := uuid.New().String() + filepath.Ext(fileName)
 	_, err := mrc.client.PutObject(bucketName, objectName, media, mediaSize, minio.PutObjectOptions{
 		ContentType: minioUploadFileType,
 	})

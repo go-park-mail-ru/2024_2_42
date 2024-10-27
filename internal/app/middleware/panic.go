@@ -1,19 +1,18 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
-	"os"
 
 	internal_errors "pinset/internal/errors"
+
+	"github.com/sirupsen/logrus"
 )
 
-func Panic(next http.Handler) http.Handler {
+func Panic(logger *logrus.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				fmt.Fprintln(os.Stdout, "Panic recovered!", r.URL.Path)
-				internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+				internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
 					Internal: internal_errors.ErrInternalServerError,
 				})
 			}
