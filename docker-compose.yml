@@ -6,3 +6,25 @@ services:
       dockerfile: ./build/Dockerfile
     ports:
       - '8080:8080'
+  db:
+    image: postgres:latest
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - DATABASE_HOST=${DB_HOST}
+    volumes:
+      - .:/docker-entrypoint-initdb.d/
+    healthcheck:
+      test: "pg_isready --username=postgres && psql --username=postgres --list" 
+      timeout: 10s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 4G
