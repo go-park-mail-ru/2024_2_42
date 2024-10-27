@@ -1,7 +1,4 @@
----
-titile: Pinset schema
----
-
+```mermaid
 erDiagram
 
     USER ||--o{COMMENT: create_edit_delete
@@ -98,3 +95,4 @@ erDiagram
         user_id int PK, FK
         board_id int PK, FK
     }
+```
