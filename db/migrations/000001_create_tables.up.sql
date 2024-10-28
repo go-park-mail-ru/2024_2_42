@@ -45,6 +45,30 @@ CREATE TABLE IF NOT EXISTS board (
     update_time TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Pin table:
+-- Таблица-хранилище пинов.
+-- board_id указанный в атрибутах ссылается на закрытую доску пользователя.
+CREATE TABLE IF NOT EXISTS pin (
+    pin_id SERIAL PRIMARY KEY,
+	author_id INT REFERENCES "user"(user_id)
+        ON DELETE CASCADE
+        NOT NULL,
+    title TEXT
+        CONSTRAINT name_length CHECK(CHAR_LENGTH(title) <= 255)
+        NOT NULL,
+	description TEXT
+        CONSTRAINT decription_length CHECK(CHAR_LENGTH(description) <= 500),
+    board_id INT REFERENCES board(board_id)
+        ON DELETE CASCADE
+        NOT NULL,
+    media_url TEXT
+        NOT NULL,
+    related_link TEXT
+        NOT NULL,
+    creation_time TIMESTAMPTZ DEFAULT NOW(),
+    update_time TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Comment table:
 -- Таблица-хранилище комментов пользователей под пинами.
 CREATE TABLE IF NOT EXISTS comment (
@@ -74,30 +98,6 @@ CREATE TABLE IF NOT EXISTS section (
         NOT NULL,
 	description TEXT
         CONSTRAINT decription_length CHECK(CHAR_LENGTH(description) <= 500),
-    creation_time TIMESTAMPTZ DEFAULT NOW(),
-    update_time TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Pin table:
--- Таблица-хранилище пинов.
--- board_id указанный в атрибутах ссылается на закрытую доску пользователя.
-CREATE TABLE IF NOT EXISTS pin (
-    pin_id SERIAL PRIMARY KEY,
-	author_id INT REFERENCES "user"(user_id)
-        ON DELETE CASCADE
-        NOT NULL,
-    title TEXT
-        CONSTRAINT name_length CHECK(CHAR_LENGTH(title) <= 255)
-        NOT NULL,
-	description TEXT
-        CONSTRAINT decription_length CHECK(CHAR_LENGTH(description) <= 500),
-    board_id INT REFERENCES board(board_id)
-        ON DELETE CASCADE
-        NOT NULL,
-    media_url TEXT
-        NOT NULL,
-    related_link TEXT
-        NOT NULL,
     creation_time TIMESTAMPTZ DEFAULT NOW(),
     update_time TIMESTAMPTZ DEFAULT NOW()
 );
