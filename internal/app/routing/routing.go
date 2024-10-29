@@ -1,10 +1,10 @@
 package routing
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"pinset/configs"
+
 	delivery "pinset/internal/app/delivery/http"
 	"pinset/internal/app/middleware"
 	"pinset/internal/app/repository"
@@ -12,7 +12,7 @@ import (
 
 	"pinset/pkg/logger"
 
-	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 // Interfaces
@@ -27,16 +27,37 @@ type (
 	FeedDelivery interface {
 		Feed(w http.ResponseWriter, r *http.Request)
 	}
+
+	MediaDelivery interface {
+		GetMedia(w http.ResponseWriter, r *http.Request)
+		UploadMedia(w http.ResponseWriter, r *http.Request)
+	}
 )
 
-func NewUserDelivery(usecase delivery.UserUsecase) UserDelivery {
+// Routings Main Handler
+type RoutingHandler struct {
+	logger      *logrus.Logger
+	mux         *http.ServeMux
+	userUsecase delivery.UserUsecase
+}
+
+func NewRoutingHandler(logger *logrus.Logger, mux *http.ServeMux, userUsecase delivery.UserUsecase) *RoutingHandler {
+	return &RoutingHandler{
+		logger:      logger,
+		mux:         mux,
+		userUsecase: userUsecase,
+	}
+}
+
+func NewUserDelivery(logger *logrus.Logger, usecase delivery.UserUsecase) UserDelivery {
 	return &delivery.UserDeliveryController{
 		Usecase: usecase,
+		Logger:  logger,
 	}
 }
 
 // User layer handlers
-func InitializeUserLayerRoutings(mux *http.ServeMux, userUsecase delivery.UserUsecase, userHandlers UserDelivery) {
+func InitializeUserLayerRoutings(rh *RoutingHandler, userHandlers UserDelivery) {
 	authRequiredRoutes := map[string]http.HandlerFunc{
 		"POST /logout": userHandlers.LogOut,
 	}
@@ -48,45 +69,74 @@ func InitializeUserLayerRoutings(mux *http.ServeMux, userUsecase delivery.UserUs
 	}
 
 	for route, handler := range authRequiredRoutes {
-		mux.HandleFunc(route, middleware.RequiredAuthorization(userUsecase, handler))
+		rh.mux.HandleFunc(route, middleware.RequiredAuthorization(rh.logger, rh.userUsecase, handler))
 	}
 
 	for route, handler := range authNotRequiredRoutes {
-		mux.HandleFunc(route, middleware.NotRequiredAuthorization(userUsecase, handler))
+		rh.mux.HandleFunc(route, middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, handler))
 	}
 }
 
-func NewFeedDelivery(usecase delivery.FeedUsecase) FeedDelivery {
+func NewFeedDelivery(logger *logrus.Logger, usecase delivery.FeedUsecase) FeedDelivery {
 	return &delivery.FeedDeliveryController{
 		Usecase: usecase,
+		Logger:  logger,
 	}
 }
 
 // Feed layer handlers
-func InitializeFeedLayerRoutings(mux *http.ServeMux, userUsecase delivery.UserUsecase, feedHandlers FeedDelivery) {
-	mux.HandleFunc("/feed", middleware.NotRequiredAuthorization(userUsecase, feedHandlers.Feed))
+func InitializeFeedLayerRoutings(rh *RoutingHandler, feedHandlers FeedDelivery) {
+	rh.mux.HandleFunc("GET /feed", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, feedHandlers.Feed))
 }
 
-// Routings handler
+func NewMediaDelivery(logger *logrus.Logger, usecase delivery.MediaUsecase) MediaDelivery {
+	return &delivery.MediaDeliveryController{
+		Usecase: usecase,
+		Logger:  logger,
+	}
+}
+
+// Media layer handlers
+func InitializeMediaLayerRoutings(rh *RoutingHandler, mediaHandlers MediaDelivery) {
+	rh.mux.HandleFunc("POST /create-pin", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.UploadMedia))
+}
+
 func Route() {
+	logger, err := logger.NewLogger()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	routerParams := configs.NewInternalParams()
 	mux := http.NewServeMux()
 
 	userRepo := repository.NewUserRepository()
 	userUsecase := usecase.NewUserUsecase(userRepo)
-	userDelivery := NewUserDelivery(userUsecase)
-	InitializeUserLayerRoutings(mux, userUsecase, userDelivery)
+	userDelivery := NewUserDelivery(logger, userUsecase)
 
 	feedRepo := repository.NewFeedRepository()
 	feedUsecase := usecase.NewFeedUsecase(feedRepo)
-	feedDelivery := NewFeedDelivery(feedUsecase)
-	InitializeFeedLayerRoutings(mux, userUsecase, feedDelivery)
+	feedDelivery := NewFeedDelivery(logger, feedUsecase)
+
+	mediaRepo, mediaErr := repository.NewMediaRepository()
+	if mediaErr != nil {
+		logger.Fatal(mediaErr)
+	}
+	mediaUsecase := usecase.NewMediaUsecase(mediaRepo)
+	mediaDelivery := NewMediaDelivery(logger, mediaUsecase)
+
+	rh := NewRoutingHandler(logger, mux, userUsecase)
+
+	// Layers initialization
+	InitializeUserLayerRoutings(rh, userDelivery)
+	InitializeFeedLayerRoutings(rh, feedDelivery)
+	InitializeMediaLayerRoutings(rh, mediaDelivery)
 
 	server := http.Server{
 		Addr:    routerParams.MainServerPort,
-		Handler: middleware.CORS(middleware.RequestID(middleware.Panic(mux))),
+		Handler: middleware.CORS(middleware.RequestID(middleware.Panic(logger, mux))),
 	}
- 
-	fmt.Printf("starting server at %s\n", routerParams.MainServerPort)
-	log.Fatal(server.ListenAndServe())
+
+	logger.WithField("starting server at ", routerParams.MainServerPort).Info()
+	logger.Fatal(server.ListenAndServe())
 }
