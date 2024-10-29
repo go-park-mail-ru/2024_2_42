@@ -1,7 +1,8 @@
 -- User table:
 --Таблица-хранилище пользователей.
 CREATE TABLE IF NOT EXISTS "user" (
-    user_id SERIAL PRIMARY KEY,
+    user_id INT
+        GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_name TEXT
         CONSTRAINT user_name_length CHECK (CHAR_LENGTH(user_name) <= 255)
         NOT NULL,
@@ -29,7 +30,8 @@ CREATE TABLE IF NOT EXISTS "user" (
 -- Board table:
 -- Таблица-хранилище досок, в которые можно сохранять пины.
 CREATE TABLE IF NOT EXISTS board (
-    board_id SERIAL PRIMARY KEY,
+    board_id INT
+        GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     owner_id INT REFERENCES "user"(user_id) 
         ON DELETE CASCADE
         NOT NULL,
@@ -49,7 +51,8 @@ CREATE TABLE IF NOT EXISTS board (
 -- Таблица-хранилище пинов.
 -- board_id указанный в атрибутах ссылается на закрытую доску пользователя.
 CREATE TABLE IF NOT EXISTS pin (
-    pin_id SERIAL PRIMARY KEY,
+    pin_id INT
+        GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	author_id INT REFERENCES "user"(user_id)
         ON DELETE CASCADE
         NOT NULL,
@@ -72,7 +75,8 @@ CREATE TABLE IF NOT EXISTS pin (
 -- Comment table:
 -- Таблица-хранилище комментов пользователей под пинами.
 CREATE TABLE IF NOT EXISTS comment (
-    comment_id SERIAL PRIMARY KEY,
+    comment_id INT
+        GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     pin_id INT REFERENCES pin(pin_id)
         ON DELETE CASCADE
         NOT NULL,
@@ -89,7 +93,8 @@ CREATE TABLE IF NOT EXISTS comment (
 -- Section table:
 -- Таблица-хранилище разделов в досках для хранения пинов.
 CREATE TABLE IF NOT EXISTS section (
-    section_id SERIAL PRIMARY KEY,
+    section_id INT
+        GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     board_id INT REFERENCES board(board_id)
         ON DELETE CASCADE
         NOT NULL,
@@ -105,7 +110,8 @@ CREATE TABLE IF NOT EXISTS section (
 -- Bookmark table:
 -- Таблица хранилище пинов, сохраненных в закладки пользователя.
 CREATE TABLE IF NOT EXISTS bookmark (
-    bookmark_id SERIAL PRIMARY KEY,
+    bookmark_id INT
+        GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     pin_id INT REFERENCES pin(pin_id)
         ON DELETE CASCADE
         NOT NULL,
