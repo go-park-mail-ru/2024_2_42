@@ -9,29 +9,30 @@ import (
 	"pinset/internal/app/models/response"
 	internal_errors "pinset/internal/errors"
 	"time"
+
+	"pinset/internal/app/session"
 )
 
 const (
 	respSignUpSuccessMesssage = "You successfully signed up!"
-
-	SessionTokenCookieKey = "session_token"
+	respLogOutSuccessMessage = "Logout successfull"
 )
 
 func (udc *UserDeliveryController) LogIn(w http.ResponseWriter, r *http.Request) {
 	// Is user authorized?
-	c, _ := r.Cookie("session_token")
+	c, _ := r.Cookie(session.SessionTokenCookieKey)
 
 	var req request.LoginRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
 			General: err, Internal: internal_errors.ErrInvalidOrMissingRequestBody,
 		})
 		return
 	}
 
 	if !req.Valid() {
-		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
 			Internal: internal_errors.ErrUserDataInvalid,
 		})
 		return
@@ -43,14 +44,14 @@ func (udc *UserDeliveryController) LogIn(w http.ResponseWriter, r *http.Request)
 
 	signedToken, err := udc.Usecase.LogIn(req)
 	if err != nil {
-		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
 			Internal: err,
 		})
 		return
 	}
 
 	cookie := &http.Cookie{
-		Name:     SessionTokenCookieKey,
+		Name:     session.SessionTokenCookieKey,
 		Value:    signedToken,
 		HttpOnly: true,
 		Secure:   true,
@@ -59,16 +60,16 @@ func (udc *UserDeliveryController) LogIn(w http.ResponseWriter, r *http.Request)
 
 	http.SetCookie(w, cookie)
 
-	sendLogInResponse(w, response.LogInResponse{
+	sendLogInResponse(w, udc.Logger, response.LogInResponse{
 		SessionCookie: signedToken,
 	})
 }
 
 func (udc *UserDeliveryController) LogOut(w http.ResponseWriter, r *http.Request) {
 	// Is user authorized?
-	c, err := r.Cookie("session_token")
+	c, err := r.Cookie(session.SessionTokenCookieKey)
 	if errors.Is(err, http.ErrNoCookie) {
-		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
 			General: err, Internal: internal_errors.ErrUserIsNotAuthorized,
 		})
 		return
@@ -76,7 +77,7 @@ func (udc *UserDeliveryController) LogOut(w http.ResponseWriter, r *http.Request
 
 	err = udc.Usecase.LogOut(c.Value)
 	if err != nil {
-		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
 			Internal: err,
 		})
 		return
@@ -84,15 +85,15 @@ func (udc *UserDeliveryController) LogOut(w http.ResponseWriter, r *http.Request
 
 	// Set cookie
 	cookie := &http.Cookie{
-		Name:     "session_token",
+		Name:     session.SessionTokenCookieKey,
 		Value:    "",
 		HttpOnly: true,
 		MaxAge:   -1,
 	}
 
 	http.SetCookie(w, cookie)
-	sendLogOutResponse(w, response.LogOutResponse{
-		Message: "Logout successfull",
+	sendLogOutResponse(w, udc.Logger, response.LogOutResponse{
+		Message: respLogOutSuccessMessage,
 	})
 }
 
@@ -100,7 +101,7 @@ func (udc *UserDeliveryController) SignUp(w http.ResponseWriter, r *http.Request
 	var user models.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
 			General: err, Internal: internal_errors.ErrInvalidOrMissingRequestBody,
 		})
 		return
@@ -110,22 +111,22 @@ func (udc *UserDeliveryController) SignUp(w http.ResponseWriter, r *http.Request
 
 	err = udc.Usecase.SignUp(&user)
 	if err != nil {
-		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
 			Internal: err,
 		})
 		return
 	}
 
-	SendSignUpResponse(w, response.SignUpResponse{
+	SendSignUpResponse(w, udc.Logger, response.SignUpResponse{
 		UserId: user.UserID, Message: respSignUpSuccessMesssage,
 	})
 }
 
 func (udc *UserDeliveryController) IsAuthorized(w http.ResponseWriter, r *http.Request) {
 	// Is user authorized?
-	cookie, err := r.Cookie("session_token")
+	cookie, err := r.Cookie(session.SessionTokenCookieKey)
 	if errors.Is(err, http.ErrNoCookie) {
-		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
 			General: err, Internal: internal_errors.ErrUserIsNotAuthorized,
 		})
 		return
@@ -133,11 +134,11 @@ func (udc *UserDeliveryController) IsAuthorized(w http.ResponseWriter, r *http.R
 
 	uid, err := udc.Usecase.IsAuthorized(cookie.Value)
 	if err == nil {
-		SendIsAuthResponse(w, response.IsAuthResponse{
+		SendIsAuthResponse(w, udc.Logger, response.IsAuthResponse{
 			UserID: uid,
 		})
 	} else {
-		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
 			Internal: err,
 		})
 	}

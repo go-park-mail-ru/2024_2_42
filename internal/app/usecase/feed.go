@@ -6,12 +6,12 @@ import (
 )
 
 func NewFeedUsecase(repo FeedRepository) delivery.FeedUsecase {
-	return &feedUsecaseController{
+	return &FeedUsecaseController{
 		repo: repo,
 	}
 }
 
-func (fuc *feedUsecaseController) Feed() models.Feed {
+func (fuc *FeedUsecaseController) Feed() models.Feed {
 	pins := fuc.repo.GetPins()
 	return models.NewFeed(pins)
 }

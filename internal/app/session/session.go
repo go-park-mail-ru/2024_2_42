@@ -4,6 +4,7 @@ import (
 	"sync"
 )
 
+const SessionTokenCookieKey = "session_token"
 type SessionsManager struct {
 	mu   *sync.RWMutex
 	data map[string]uint64

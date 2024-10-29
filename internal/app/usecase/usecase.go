@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"io"
 	"pinset/configs"
 	"pinset/internal/app/models"
 	"pinset/internal/app/session"
@@ -20,16 +21,27 @@ type (
 		GetPins() []models.Pin
 		InsertPin(models.Pin)
 	}
+
+	MediaRepository interface {
+		GetBucketNameForContentType(fileType string) string
+		HasCorrectContentType(string) bool
+		GetMedia(string, string) ([]byte, error)
+		UploadMedia(string, string, io.Reader, int64) (string, error)
+	}
 )
 
 // Controllers
 type (
-	userUsecaseController struct {
-		repo UserRepository
+	UserUsecaseController struct {
+		repo           UserRepository
 		authParameters configs.AuthParams
 	}
 
-	feedUsecaseController struct {
+	FeedUsecaseController struct {
 		repo FeedRepository
+	}
+
+	MediaUsecaseController struct {
+		repo MediaRepository
 	}
 )
