@@ -48,7 +48,7 @@ func NewAuthParams() AuthParams {
 }
 
 const (
-	loggerfilePath = "./logs/pinset.log"
+	loggerfilePath = "/docker-42/logs/pinset.log"
 )
 
 type LoggerParams struct {

@@ -16,6 +16,8 @@ FROM alpine:3.19 AS runner
 
 WORKDIR /docker-42/
 
+RUN mkdir -p /docker-42/logs
+
 COPY --from=builder /usr/local/src/bin .
 
 EXPOSE 8080

@@ -6,6 +6,8 @@ services:
       dockerfile: ./build/Dockerfile
     ports:
       - '8080:8080'
+    volumes:
+      - ./logs:/docker-42/logs/
   db:
     image: postgres:17.0
     ports:
