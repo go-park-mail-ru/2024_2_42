@@ -18,7 +18,7 @@ func (fdc *FeedDeliveryController) Feed(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusOK)
 
 	if err := json.NewEncoder(w).Encode(feed); err != nil {
-		internal_errors.SendErrorResponse(w, internal_errors.ErrorInfo{
+		internal_errors.SendErrorResponse(w, fdc.Logger, internal_errors.ErrorInfo{
 			General: err, Internal: internal_errors.ErrFeedNotAccessible,
 		})
 		return
