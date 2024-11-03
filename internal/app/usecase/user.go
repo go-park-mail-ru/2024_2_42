@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"fmt"
 	"pinset/configs"
 	delivery "pinset/internal/app/delivery/http"
 	"pinset/internal/app/models"
@@ -25,11 +26,18 @@ func (uuc *UserUsecaseController) LogIn(req request.LoginRequest) (string, error
 		Password: req.Password,
 	}
 
-	user.UserID = uuc.repo.GetUserId(user)
-
 	// User is not registered
-	if !uuc.repo.UserAlreadySignedUp(user) {
-		return "", internal_errors.ErrUserIsNotRegistered
+	isUserExists, err := uuc.repo.CheckUserByEmail(&user)
+	if err != nil {
+		return "", fmt.Errorf("signUp after UserAlreadySignedUp: %w", err)
+	}
+	if !isUserExists {
+		return "", internal_errors.ErrUserDoesntExists
+	}
+
+	err = uuc.repo.CheckUserCredentials(&user)
+	if err != nil {
+		return "", fmt.Errorf("login checkCredentials: %w", err)
 	}
 
 	// Does user already have an active session?
@@ -71,13 +79,18 @@ func (uuc *UserUsecaseController) SignUp(user *models.User) error {
 	}
 
 	// User already registered
-	if uuc.repo.UserAlreadySignedUp(*user) {
-		return internal_errors.ErrUserAlreadyRegistered
+	isUserExists, err := uuc.repo.CheckUserByEmail(user)
+	if err != nil {
+		return fmt.Errorf("signUp after UserAlreadySignedUp: %w", err)
 	}
 
-	err := uuc.repo.Insert(user)
+	if isUserExists {
+		return internal_errors.ErrUserAlreadyExists
+	}
+
+	err = uuc.repo.CreateUser(user)
 	if err != nil {
-		return err
+		return fmt.Errorf("signUp after Insert: %w", err)
 	}
 
 	return nil
@@ -105,4 +118,76 @@ func (uuc *UserUsecaseController) IsAuthorized(token string) (float64, error) {
 	}
 
 	return 0, internal_errors.ErrBadRequest
+}
+
+func (uuc *UserUsecaseController) UpdateUserInfo(token string, user *models.User) error {
+	userID, err := uuc.IsAuthorized(token)
+
+	if err != nil {
+		return fmt.Errorf("updateUserPasswordByID isAuthorized: %w", err)
+	}
+
+	if userID != float64(user.UserID) {
+		return internal_errors.ErrBadUserID
+	}
+
+	err = uuc.repo.UpdateUserInfoByID(user)
+	if err != nil {
+		return fmt.Errorf("getUserInfoByID usecase: %w", err)
+	}
+	return nil
+}
+
+func (uuc *UserUsecaseController) UpdateUserPassword(token string, user *models.User) error {
+	userID, err := uuc.IsAuthorized(token)
+
+	if err != nil {
+		return fmt.Errorf("updateUserPasswordByID isAuthorized: %w", err)
+	}
+
+	if userID != float64(user.UserID) {
+		return internal_errors.ErrBadUserID
+	}
+
+	err = uuc.repo.UpdateUserPasswordByID(user)
+	if err != nil {
+		return fmt.Errorf("getUserInfoByID updateUserPasswordByID: %w", err)
+	}
+	return nil
+}
+
+func (uuc *UserUsecaseController) DeleteProfile(token string, user *models.User) error {
+	_, err := uuc.IsAuthorized(token)
+
+	if err != nil {
+		return fmt.Errorf("deleteUserByID isAuthorized: %w", err)
+	}
+
+	isUserExists, err := uuc.repo.CheckUserByEmail(user)
+	if err != nil {
+		return fmt.Errorf("signUp after UserAlreadySignedUp: %w", err)
+	}
+
+	if !isUserExists {
+		return internal_errors.ErrUserDoesntExists
+	}
+
+	err = uuc.repo.DeleteUserByID(user.UserID)
+	if err != nil {
+		return fmt.Errorf("getUserInfoByID usecase: %w", err)
+	}
+	return nil
+}
+
+func (uuc *UserUsecaseController) FollowUser(token string, ownerID uint64, followerID uint64) error {
+	_, err := uuc.IsAuthorized(token)
+	if err != nil {
+		return fmt.Errorf("FollowUser isAuthorized: %w", err)
+	}
+
+	err = uuc.repo.DeleteUserByID(user.UserID)
+	if err != nil {
+		return fmt.Errorf("getUserInfoByID usecase: %w", err)
+	}
+	return nil
 }

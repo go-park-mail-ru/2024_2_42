@@ -5,8 +5,8 @@ import (
 	"errors"
 	"net/http"
 	delivery "pinset/internal/app/delivery/http"
-	internal_errors "pinset/internal/errors"
 	"pinset/internal/app/session"
+	internal_errors "pinset/internal/errors"
 
 	"github.com/sirupsen/logrus"
 )

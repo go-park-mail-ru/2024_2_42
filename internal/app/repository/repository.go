@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"pinset/internal/app/models"
+	"database/sql"
 	"pinset/internal/app/session"
 	"sync"
 
@@ -12,7 +12,7 @@ import (
 type (
 	UserRepositoryController struct {
 		mu *sync.RWMutex
-		db map[string]*models.User
+		db *sql.DB
 		sm *session.SessionsManager
 	}
 

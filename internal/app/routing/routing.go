@@ -5,9 +5,11 @@ import (
 	"net/http"
 	"pinset/configs"
 
+	"pinset/internal/app/db"
 	delivery "pinset/internal/app/delivery/http"
 	"pinset/internal/app/middleware"
 	"pinset/internal/app/repository"
+	"pinset/internal/app/repository/user_repository"
 	"pinset/internal/app/usecase"
 
 	"pinset/pkg/logger"
@@ -110,7 +112,9 @@ func Route() {
 	routerParams := configs.NewInternalParams()
 	mux := http.NewServeMux()
 
-	userRepo := repository.NewUserRepository()
+	repo := db.InitDB(logger)
+
+	userRepo := user_repository.NewUserRepository(repo, logger)
 	userUsecase := usecase.NewUserUsecase(userRepo)
 	userDelivery := NewUserDelivery(logger, userUsecase)
 
@@ -122,6 +126,9 @@ func Route() {
 	if mediaErr != nil {
 		logger.Fatal(mediaErr)
 	}
+
+	logger.Info("MinioRepo created succesful!")
+
 	mediaUsecase := usecase.NewMediaUsecase(mediaRepo)
 	mediaDelivery := NewMediaDelivery(logger, mediaUsecase)
 

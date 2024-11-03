@@ -17,10 +17,13 @@ CREATE TABLE IF NOT EXISTS "user" (
         CONSTRAINT password_length CHECK (
             CHAR_LENGTH(password) >= 8 AND
             CHAR_LENGTH(password) <= 24),
+    description TEXT
+        CONSTRAINT decription_length CHECK (
+            CHAR_LENGTH(description) < 500
+        ),
     birth_time TIMESTAMPTZ,
     gender TEXT
-        CONSTRAINT gender_length CHECK (CHAR_LENGTH(gender) <= 20)
-        NOT NULL,
+        CONSTRAINT gender_length CHECK (CHAR_LENGTH(gender) <= 20),
     avatar_url TEXT,
     creation_time TIMESTAMPTZ DEFAULT NOW(),
     update_time TIMESTAMPTZ DEFAULT NOW()
@@ -140,13 +143,13 @@ CREATE TABLE IF NOT EXISTS saved_pin_to_section (
 -- Follower table:
 -- Таблица-хранилище подписчиков и подписок.
 CREATE TABLE IF NOT EXISTS follower (
+    owner_id INT REFERENCES "user"(user_id)
+        ON DELETE CASCADE
+        NOT NULL,
     follower_id INT REFERENCES "user"(user_id)
         ON DELETE CASCADE
         NOT NULL,
-    following_id INT REFERENCES "user"(user_id)
-        ON DELETE CASCADE
-        NOT NULL,
-    PRIMARY KEY (follower_id, following_id)
+    PRIMARY KEY (owner_id, following_id)
 );
 
 -- Saved boards table:

@@ -10,10 +10,20 @@ import (
 // Repository interfaces
 type (
 	UserRepository interface {
-		Insert(*models.User) error
+		CreateUser(*models.User) error
+		CheckUserByEmail(*models.User) (bool, error)
+		GetUserInfoByID(uint64) (models.User, error)
+		CheckUserCredentials(*models.User) error
+		UpdateUserInfoByID(*models.User) error
+		UpdateUserPasswordByID(*models.User) error
+		DeleteUserByID(uint64) error
+
+		FollowUser(uint64, uint64) error
+		UnfollowUser(uint64, uint64) error
+		GetAllFollowings(uint64, uint64) ([]uint64, error)
+		GetAllSubscriptions(uint64, uint64) ([]uint64, error)
+
 		UserHasActiveSession(string) bool
-		UserAlreadySignedUp(models.User) bool
-		GetUserId(models.User) uint64
 		Session() *session.SessionsManager
 	}
 
