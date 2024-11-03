@@ -178,16 +178,3 @@ func (uuc *UserUsecaseController) DeleteProfile(token string, user *models.User)
 	}
 	return nil
 }
-
-func (uuc *UserUsecaseController) FollowUser(token string, ownerID uint64, followerID uint64) error {
-	_, err := uuc.IsAuthorized(token)
-	if err != nil {
-		return fmt.Errorf("FollowUser isAuthorized: %w", err)
-	}
-
-	err = uuc.repo.DeleteUserByID(user.UserID)
-	if err != nil {
-		return fmt.Errorf("getUserInfoByID usecase: %w", err)
-	}
-	return nil
-}
