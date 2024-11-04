@@ -22,12 +22,10 @@ type User struct {
 	NickName     string    `json:"nick_name"`
 	Email        string    `json:"email"`
 	Password     string    `json:"password"`
+	Description  string    `json:"description"`
 	BirthTime    time.Time `json:"birth_date"`
 	Gender       string    `json:"gender"`
 	AvatarUrl    string    `json:"avatar_url"`
-	Followers    []User    `json:"followers"`
-	Following    []User    `json:"following"`
-	Boards       []Board   `json:"boards"`
 	CreationTime time.Time `json:"creation_time"`
 	UpdateTime   time.Time `json:"update_time"`
 }

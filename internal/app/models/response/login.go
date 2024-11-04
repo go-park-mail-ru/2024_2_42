@@ -5,5 +5,5 @@ type LogInResponse struct {
 }
 
 type IsAuthResponse struct {
-	UserID float64 `json:"user_id"`
+	UserID uint64 `json:"user_id"`
 }

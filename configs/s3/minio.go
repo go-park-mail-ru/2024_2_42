@@ -14,7 +14,7 @@ type MinioParams struct {
 
 func NewMinioParams() MinioParams {
 	return MinioParams{
-		Endpoint:        configs.LookUpStringEnvVar("MINIO_S3_ENDPOINT", "localhost:9000"),
+		Endpoint:        configs.LookUpStringEnvVar("MINIO_S3_ENDPOINT", "minio:9000"),
 		AccessKeyID:     configs.LookUpStringEnvVar("MINIO_S3_ACCESS_KEY", "minioadmin"),
 		SecretAccessKey: configs.LookUpStringEnvVar("MINIO_S3_SECRET_ACCESS_KEY", "minioadmin"),
 		UseSSL:          configs.LookUpBoolEnvVar("MINIO_S3_USE_SSL", false),

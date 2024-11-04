@@ -50,7 +50,14 @@ var (
 
 	// Media
 	ErrExpectedMultipartContentType = errors.New("запрос имеет Content-Type не multipart")
-	ErrWrongMediaContentType = errors.New("загружаемое медиа имеет некорректный Content-Type")
+	ErrWrongMediaContentType        = errors.New("загружаемое медиа имеет некорректный Content-Type")
+
+	//Postgres
+	ErrUserAlreadyExists = errors.New("пользователь уже существует")
+	ErrUserDoesntExists  = errors.New("пользователя не существует")
+	ErrBadPassword       = errors.New("некорректный пароль")
+	ErrBadUserInputData  = errors.New("ведена некорректная информация о пользователе")
+	ErrBadUserID         = errors.New("id пользователя не соответсвует текущему")
 )
 
 var ErrorMapping = map[error]struct {
@@ -88,12 +95,12 @@ var ErrorMapping = map[error]struct {
 
 	// Media
 	ErrExpectedMultipartContentType: {HttpCode: 400, InternalCode: 19},
-	ErrWrongMediaContentType: {HttpCode: 400, InternalCode: 20},
+	ErrWrongMediaContentType:        {HttpCode: 400, InternalCode: 20},
 }
 
 func IsInternal(err error) bool {
 	_, ok := ErrorMapping[err]
-	return ok 
+	return ok
 }
 
 func SendErrorResponse(w http.ResponseWriter, logger *logrus.Logger, ei ErrorInfo) {

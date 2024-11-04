@@ -10,8 +10,8 @@ import (
 )
 
 func sendLogInResponse(w http.ResponseWriter, logger *logrus.Logger, sr response.LogInResponse) {
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 
 	// Отправляем JSON-ответ
 	if err := json.NewEncoder(w).Encode(sr); err != nil {
@@ -23,8 +23,8 @@ func sendLogInResponse(w http.ResponseWriter, logger *logrus.Logger, sr response
 }
 
 func sendLogOutResponse(w http.ResponseWriter, logger *logrus.Logger, lr response.LogOutResponse) {
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 
 	// Отправляем JSON-ответ
 	if err := json.NewEncoder(w).Encode(lr); err != nil {
@@ -36,8 +36,8 @@ func sendLogOutResponse(w http.ResponseWriter, logger *logrus.Logger, lr respons
 }
 
 func SendSignUpResponse(w http.ResponseWriter, logger *logrus.Logger, sr response.SignUpResponse) {
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 
 	if err := json.NewEncoder(w).Encode(sr); err != nil {
 		internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
@@ -56,7 +56,6 @@ func SendIsAuthResponse(w http.ResponseWriter, logger *logrus.Logger, ar respons
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(respJSON)
 }
@@ -69,6 +68,31 @@ func SendMediaUploadResponse(w http.ResponseWriter, logger *logrus.Logger, mur r
 	if err != nil {
 		internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
 			General: err, Internal: internal_errors.ErrInternalServerError,
+		})
+		return
+	}
+}
+
+func SendUserProfileResponse(w http.ResponseWriter, logger *logrus.Logger, ar response.UserProfileResponse) {
+	respJSON, err := json.Marshal(ar)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInternalServerError,
+		})
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(respJSON)
+}
+
+func SendUpdateResponse(w http.ResponseWriter, logger *logrus.Logger, sr response.UpdateUserInfo) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(sr); err != nil {
+		internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrCantProcessFormData,
 		})
 		return
 	}

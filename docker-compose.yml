@@ -6,10 +6,14 @@ services:
       dockerfile: ./build/Dockerfile
     ports:
       - '8080:8080'
+    volumes:
+      - ./logs:/docker-42/logs/
+    env_file:
+      - .env
   db:
     image: postgres:17.0
     ports:
-      - '5432:5432'
+      - '13000:5432'
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
