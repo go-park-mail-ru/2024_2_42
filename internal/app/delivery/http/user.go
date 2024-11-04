@@ -8,14 +8,17 @@ import (
 	"pinset/internal/app/models/request"
 	"pinset/internal/app/models/response"
 	internal_errors "pinset/internal/errors"
+	"strconv"
 	"time"
 
 	"pinset/internal/app/session"
+
+	"github.com/gorilla/mux"
 )
 
 const (
 	respSignUpSuccessMesssage = "You successfully signed up!"
-	respLogOutSuccessMessage = "Logout successfull"
+	respLogOutSuccessMessage  = "Logout successfull"
 )
 
 func (udc *UserDeliveryController) LogIn(w http.ResponseWriter, r *http.Request) {
@@ -118,7 +121,7 @@ func (udc *UserDeliveryController) SignUp(w http.ResponseWriter, r *http.Request
 	}
 
 	SendSignUpResponse(w, udc.Logger, response.SignUpResponse{
-		UserId: user.UserID, Message: respSignUpSuccessMesssage,
+		UserID: user.UserID, Message: respSignUpSuccessMesssage,
 	})
 }
 
@@ -141,5 +144,78 @@ func (udc *UserDeliveryController) IsAuthorized(w http.ResponseWriter, r *http.R
 		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
 			Internal: err,
 		})
+		return
 	}
+}
+
+func (udc *UserDeliveryController) GetUserInfo(w http.ResponseWriter, r *http.Request) {
+	uidStr := mux.Vars(r)["user_id"]
+	uid, err := strconv.ParseUint(uidStr, 10, 64)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+	userInfo, err := udc.Usecase.GetUserInfo(&models.User{UserID: uid})
+	if err != nil {
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+	SendUserProfileResponse(w, udc.Logger, response.UserProfileResponse{
+		UserName:    userInfo.UserName,
+		NickName:    userInfo.NickName,
+		Description: userInfo.Description,
+		Gender:      userInfo.Gender,
+		BirthTime:   userInfo.BirthTime,
+	})
+}
+
+func (udc *UserDeliveryController) UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
+	c, _ := r.Cookie(session.SessionTokenCookieKey)
+
+	var req request.UpdateUserInfoRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInvalidOrMissingRequestBody,
+		})
+		return
+	}
+
+	if !req.Valid() {
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
+			Internal: internal_errors.ErrUserDataInvalid,
+		})
+		return
+	}
+
+	var uid uint64
+	uid, err = udc.Usecase.IsAuthorized(c.Value)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+	err = udc.Usecase.UpdateUserInfo(c.Value, &models.User{
+		UserID:      uid,
+		UserName:    req.UserName,
+		NickName:    req.NickName,
+		Description: req.Description,
+		BirthTime:   req.BirthTime,
+		Gender:      req.Gender,
+		AvatarUrl:   req.AvatarUrl,
+	})
+
+	if err != nil {
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+	}
+	SendUpdateResponse(w, udc.Logger, response.UpdateUserInfo{
+		Message: "Succes!",
+	})
 }

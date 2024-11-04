@@ -54,7 +54,7 @@ var (
 
 	//Postgres
 	ErrUserAlreadyExists = errors.New("пользователь уже существует")
-	ErrUserDoesntExists  = errors.New("пользователь не существует")
+	ErrUserDoesntExists  = errors.New("пользователя не существует")
 	ErrBadPassword       = errors.New("некорректный пароль")
 	ErrBadUserInputData  = errors.New("ведена некорректная информация о пользователе")
 	ErrBadUserID         = errors.New("id пользователя не соответсвует текущему")

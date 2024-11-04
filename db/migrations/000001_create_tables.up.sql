@@ -149,7 +149,7 @@ CREATE TABLE IF NOT EXISTS follower (
     follower_id INT REFERENCES "user"(user_id)
         ON DELETE CASCADE
         NOT NULL,
-    PRIMARY KEY (owner_id, following_id)
+    PRIMARY KEY (owner_id, follower_id)
 );
 
 -- Saved boards table:

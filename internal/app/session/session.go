@@ -40,3 +40,14 @@ func (sm *SessionsManager) Exists(token string) bool {
 
 	return ok
 }
+
+func (sm *SessionsManager) GetID(token string) uint64 {
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+
+	ownerID, ok := sm.data[token]
+	if !ok {
+		return 0
+	}
+	return ownerID
+}

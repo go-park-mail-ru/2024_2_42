@@ -4,6 +4,7 @@ import (
 	"mime/multipart"
 	"pinset/internal/app/models"
 	"pinset/internal/app/models/request"
+	"pinset/internal/app/models/response"
 
 	"github.com/sirupsen/logrus"
 )
@@ -14,7 +15,9 @@ type (
 		LogIn(request.LoginRequest) (string, error)
 		LogOut(string) error
 		SignUp(user *models.User) error
-		IsAuthorized(string) (float64, error)
+		IsAuthorized(string) (uint64, error)
+		GetUserInfo(*models.User) (response.UserProfileResponse, error)
+		UpdateUserInfo(string, *models.User) error
 	}
 
 	FeedUsecase interface {
@@ -31,16 +34,16 @@ type (
 type (
 	UserDeliveryController struct {
 		Usecase UserUsecase
-		Logger *logrus.Logger
+		Logger  *logrus.Logger
 	}
 
 	FeedDeliveryController struct {
 		Usecase FeedUsecase
-		Logger *logrus.Logger
+		Logger  *logrus.Logger
 	}
 
 	MediaDeliveryController struct {
 		Usecase MediaUsecase
-		Logger *logrus.Logger
+		Logger  *logrus.Logger
 	}
 )

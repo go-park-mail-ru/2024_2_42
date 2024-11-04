@@ -62,19 +62,20 @@ func RequiredAuthorization(logger *logrus.Logger, uc delivery.UserUsecase, next 
 
 func NotRequiredAuthorization(logger *logrus.Logger, uc delivery.UserUsecase, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, err := requestWithUserContext(r, uc)
-		if err != nil && !errors.Is(err, http.ErrNoCookie) {
-			if _, ok := internal_errors.ErrorMapping[err]; ok {
-				internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
-					Internal: err,
-				})
-			} else {
-				internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
-					General: err, Internal: internal_errors.ErrInternalServerError,
-				})
-			}
-			return
-		}
+		// //_, err := requestWithUserContext(r, uc)
+		// fmt.Println(err)
+		// if err != nil && !errors.Is(err, http.ErrNoCookie) {
+		// 	if _, ok := internal_errors.ErrorMapping[err]; ok {
+		// 		internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
+		// 			Internal: err,
+		// 		})
+		// 	} else {
+		// 		internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
+		// 			General: err, Internal: internal_errors.ErrInternalServerError,
+		// 		})
+		// 	}
+		// 	return
+		// }
 
 		next.ServeHTTP(w, r)
 	}

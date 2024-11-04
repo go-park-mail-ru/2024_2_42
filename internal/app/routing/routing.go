@@ -9,11 +9,12 @@ import (
 	delivery "pinset/internal/app/delivery/http"
 	"pinset/internal/app/middleware"
 	"pinset/internal/app/repository"
-	"pinset/internal/app/repository/user_repository"
+	"pinset/internal/app/repository/userRepository"
 	"pinset/internal/app/usecase"
 
 	"pinset/pkg/logger"
 
+	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
 
@@ -24,6 +25,8 @@ type (
 		LogOut(w http.ResponseWriter, r *http.Request)
 		SignUp(w http.ResponseWriter, r *http.Request)
 		IsAuthorized(w http.ResponseWriter, r *http.Request)
+		GetUserInfo(w http.ResponseWriter, r *http.Request)
+		UpdateUserInfo(w http.ResponseWriter, r *http.Request)
 	}
 
 	FeedDelivery interface {
@@ -39,11 +42,11 @@ type (
 // Routings Main Handler
 type RoutingHandler struct {
 	logger      *logrus.Logger
-	mux         *http.ServeMux
+	mux         *mux.Router
 	userUsecase delivery.UserUsecase
 }
 
-func NewRoutingHandler(logger *logrus.Logger, mux *http.ServeMux, userUsecase delivery.UserUsecase) *RoutingHandler {
+func NewRoutingHandler(logger *logrus.Logger, mux *mux.Router, userUsecase delivery.UserUsecase) *RoutingHandler {
 	return &RoutingHandler{
 		logger:      logger,
 		mux:         mux,
@@ -60,23 +63,14 @@ func NewUserDelivery(logger *logrus.Logger, usecase delivery.UserUsecase) UserDe
 
 // User layer handlers
 func InitializeUserLayerRoutings(rh *RoutingHandler, userHandlers UserDelivery) {
-	authRequiredRoutes := map[string]http.HandlerFunc{
-		"POST /logout": userHandlers.LogOut,
-	}
+	rh.mux.HandleFunc("/user/update/{user_id}", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.UpdateUserInfo)).Methods("PUT")
+	rh.mux.HandleFunc("/logout", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.LogOut)).Methods("POST")
 
-	authNotRequiredRoutes := map[string]http.HandlerFunc{
-		"POST /login":        userHandlers.LogIn,
-		"POST /signup":       userHandlers.SignUp,
-		"GET /is_authorized": userHandlers.IsAuthorized,
-	}
+	rh.mux.HandleFunc("/login", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.LogIn)).Methods("POST")
+	rh.mux.HandleFunc("/signup", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.SignUp)).Methods("POST")
+	rh.mux.HandleFunc("/is_authorized", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.IsAuthorized)).Methods("GET")
+	rh.mux.HandleFunc("/user/{user_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.GetUserInfo)).Methods("GET")
 
-	for route, handler := range authRequiredRoutes {
-		rh.mux.HandleFunc(route, middleware.RequiredAuthorization(rh.logger, rh.userUsecase, handler))
-	}
-
-	for route, handler := range authNotRequiredRoutes {
-		rh.mux.HandleFunc(route, middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, handler))
-	}
 }
 
 func NewFeedDelivery(logger *logrus.Logger, usecase delivery.FeedUsecase) FeedDelivery {
@@ -88,7 +82,7 @@ func NewFeedDelivery(logger *logrus.Logger, usecase delivery.FeedUsecase) FeedDe
 
 // Feed layer handlers
 func InitializeFeedLayerRoutings(rh *RoutingHandler, feedHandlers FeedDelivery) {
-	rh.mux.HandleFunc("GET /feed", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, feedHandlers.Feed))
+	rh.mux.HandleFunc("/feed", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, feedHandlers.Feed)).Methods("GET")
 }
 
 func NewMediaDelivery(logger *logrus.Logger, usecase delivery.MediaUsecase) MediaDelivery {
@@ -110,11 +104,11 @@ func Route() {
 	}
 
 	routerParams := configs.NewInternalParams()
-	mux := http.NewServeMux()
+	mux := mux.NewRouter()
 
 	repo := db.InitDB(logger)
 
-	userRepo := user_repository.NewUserRepository(repo, logger)
+	userRepo := userRepository.NewUserRepository(repo, logger)
 	userUsecase := usecase.NewUserUsecase(userRepo)
 	userDelivery := NewUserDelivery(logger, userUsecase)
 
