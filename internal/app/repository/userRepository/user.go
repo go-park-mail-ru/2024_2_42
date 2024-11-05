@@ -71,7 +71,7 @@ func (urc *UserRepositoryController) CheckUserCredentials(user *models.User) err
 	var userPassword string
 	err := urc.db.QueryRow(CheckUserCredentials, user.Email).Scan(&userPassword)
 	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return internal_errors.ErrUserDoesntExists
 		}
 		return fmt.Errorf("psql GetUserByID: %w", err)
@@ -98,9 +98,16 @@ func (urc *UserRepositoryController) GetUserInfo(user *models.User) (response.Us
 
 func (urc *UserRepositoryController) UpdateUserInfo(user *models.User) error {
 	var userID uint64
-	err := urc.db.QueryRow(UpdateUserInfoByID, user.UserName, user.NickName, user.Description, user.BirthTime, user.Gender, user.AvatarUrl, user.UserID).Scan(&userID)
+	err := urc.db.QueryRow(UpdateUserInfoByID,
+		user.UserName,
+		user.NickName,
+		user.Description,
+		user.BirthTime,
+		user.Gender,
+		user.AvatarUrl,
+		user.UserID).Scan(&userID)
 	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return internal_errors.ErrUserDoesntExists
 		}
 		return fmt.Errorf("psql UpdateUserInfo: %w", err)
@@ -114,7 +121,7 @@ func (urc *UserRepositoryController) UpdateUserPassword(user *models.User) error
 	var userID uint64
 	err := urc.db.QueryRow(UpdateUserPasswordByID, user.UserID).Scan(&userID)
 	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return internal_errors.ErrUserDoesntExists
 		}
 		return fmt.Errorf("psql UpdateUserPassword: %w", err)
@@ -124,9 +131,12 @@ func (urc *UserRepositoryController) UpdateUserPassword(user *models.User) error
 }
 
 func (urc *UserRepositoryController) DeleteUserByID(userID uint64) error {
-	_, err := urc.db.Exec(UpdateUserPasswordByID, userID)
+	_, err := urc.db.Exec(DeleteUserByID, userID)
 	if err != nil {
-		return internal_errors.ErrUserDoesntExists
+		if errors.Is(err, sql.ErrNoRows) {
+			return internal_errors.ErrUserDoesntExists
+		}
+		return fmt.Errorf("psql DeleteUserByID: %w", err)
 	}
 	urc.logger.WithField("user was succesfil deleted with userID", userID).Info()
 	return nil
@@ -149,7 +159,7 @@ func (urc *UserRepositoryController) UnfollowUser(ownerID uint64, followerID uin
 }
 
 func (urc *UserRepositoryController) GetAllFollowings(ownerID uint64, followerID uint64) ([]uint64, error) {
-	rows, err := urc.db.Query(GetAllFollowings, ownerID, followerID)
+	rows, err := urc.db.Query(GetAllFollowings, ownerID)
 	if err != nil {
 		return nil, fmt.Errorf("getAllFollowings: %w", err)
 	}
@@ -192,10 +202,10 @@ func (urc *UserRepositoryController) GetAllSubscriptions(ownerID uint64, followe
 
 func (urc *UserRepositoryController) GetFollowingsCount(follower_id uint64) (uint64, error) {
 	var followingsCount uint64
-	err := urc.db.QueryRow(GetAllFollowings, follower_id).Scan(&followingsCount)
+	err := urc.db.QueryRow(GetFollowingsCount, follower_id).Scan(&followingsCount)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return 0, nil
+			return followingsCount, nil
 		}
 		return 0, fmt.Errorf("psql GetFollowingsCount: %w", err)
 	}
@@ -203,12 +213,12 @@ func (urc *UserRepositoryController) GetFollowingsCount(follower_id uint64) (uin
 	return followingsCount, nil
 }
 
-func (urc *UserRepositoryController) GetlSubsriptionsCount(ownder_id uint64) (uint64, error) {
+func (urc *UserRepositoryController) GetSubsriptionsCount(ownder_id uint64) (uint64, error) {
 	var subscriptionsCount uint64
-	err := urc.db.QueryRow(GetAllFollowings, ownder_id).Scan(&subscriptionsCount)
+	err := urc.db.QueryRow(GetSubsriptionsCount, ownder_id).Scan(&subscriptionsCount)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return 0, nil
+			return subscriptionsCount, nil
 		}
 		return 0, fmt.Errorf("psql GetlSubsriptionsCount: %w", err)
 	}

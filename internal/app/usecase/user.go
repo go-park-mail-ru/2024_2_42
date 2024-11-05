@@ -197,7 +197,7 @@ func (uuc *UserUsecaseController) GetUserInfo(user *models.User) (response.UserP
 		return response.UserProfileResponse{}, fmt.Errorf("userProfile GetFollowingsCount usecase: %w", err)
 	}
 
-	userProfilelInfo.NumOfUserSubscriptions, err = uuc.repo.GetlSubsriptionsCount(user.UserID)
+	userProfilelInfo.NumOfUserSubscriptions, err = uuc.repo.GetSubsriptionsCount(user.UserID)
 	if err != nil {
 		return response.UserProfileResponse{}, fmt.Errorf("userProfile GetFollowingsCount usecase: %w", err)
 	}

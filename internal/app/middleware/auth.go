@@ -63,7 +63,6 @@ func RequiredAuthorization(logger *logrus.Logger, uc delivery.UserUsecase, next 
 func NotRequiredAuthorization(logger *logrus.Logger, uc delivery.UserUsecase, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// //_, err := requestWithUserContext(r, uc)
-		// fmt.Println(err)
 		// if err != nil && !errors.Is(err, http.ErrNoCookie) {
 		// 	if _, ok := internal_errors.ErrorMapping[err]; ok {
 		// 		internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{

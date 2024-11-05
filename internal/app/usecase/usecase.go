@@ -25,7 +25,7 @@ type (
 		GetAllFollowings(uint64, uint64) ([]uint64, error)
 		GetAllSubscriptions(uint64, uint64) ([]uint64, error)
 		GetFollowingsCount(uint64) (uint64, error)
-		GetlSubsriptionsCount(uint64) (uint64, error)
+		GetSubsriptionsCount(uint64) (uint64, error)
 
 		UserHasActiveSession(string) bool
 		Session() *session.SessionsManager
