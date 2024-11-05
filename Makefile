@@ -1,3 +1,5 @@
+include .env
+
 start:
 	docker compose up --build
 
@@ -5,8 +7,8 @@ stop:
 	docker compose down -v
 
 migrate:
-	migrate -source file://db/migrations -database postgres://$(DB_USER):$(DB_PASSWORD)@localhost:$(DB_PORT_OUTER)/$(DB_NAME)?sslmode=$(DB_SSLMODE) up
-	
+	migrate -source file://db/migrations -database postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT_OUTER}/${DB_NAME}?sslmode=${DB_SSLMODE} up
+
 	#если не видит переменные из .env используй
 	#Для linux
 	#sudo -E $(cat .env | xargs) make migrate
@@ -17,3 +19,4 @@ migrate:
     #	}
 	#}
 	#make migrate
+	

@@ -11,7 +11,6 @@ type Comment struct {
 	PinID        uint64     `json:"pin_id"`
 	AuthorID     uint64     `json:"author_id"`
 	Body         string     `json:"body"`
-	Bookmarks    []Bookmark `json:"bookmarks"`
 	CreationTime time.Time  `json:"creation_time"`
 	UpdateTime   time.Time  `json:"update_time"`
 }

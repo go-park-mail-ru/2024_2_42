@@ -73,6 +73,84 @@ func SendMediaUploadResponse(w http.ResponseWriter, logger *logrus.Logger, mur r
 	}
 }
 
+func SendPinCreatedResponse(w http.ResponseWriter, logger *logrus.Logger, pcr response.PinCreatedResponse) {
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+
+	err := json.NewEncoder(w).Encode(pcr)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInternalServerError,
+		})
+		return
+	}
+}
+
+func SendBoardCreatedResponse(w http.ResponseWriter, logger *logrus.Logger, pcr response.BoardCreatedResponse) {
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+
+	err := json.NewEncoder(w).Encode(pcr)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInternalServerError,
+		})
+		return
+	}
+}
+
+func SendBoardResponse(w http.ResponseWriter, logger *logrus.Logger, br response.BoardResponse) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+
+	err := json.NewEncoder(w).Encode(br)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInternalServerError,
+		})
+		return
+	}
+}
+
+func SendPinPreviewResponse(w http.ResponseWriter, logger *logrus.Logger, pr response.PinPreviewResponse) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+
+	err := json.NewEncoder(w).Encode(pr)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInternalServerError,
+		})
+		return
+	}
+}
+
+func SendPinPageResponse(w http.ResponseWriter, logger *logrus.Logger, pr response.PinPageResponse) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+
+	err := json.NewEncoder(w).Encode(pr)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInternalServerError,
+		})
+		return
+	}
+}
+
+func SendResponseBookmarkExists(w http.ResponseWriter, logger *logrus.Logger, rbe response.ResponseBookmarkExists) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+
+	err := json.NewEncoder(w).Encode(rbe)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInternalServerError,
+		})
+		return
+	}
+}
+
 func SendUserProfileResponse(w http.ResponseWriter, logger *logrus.Logger, ar response.UserProfileResponse) {
 	respJSON, err := json.Marshal(ar)
 	if err != nil {
@@ -86,7 +164,7 @@ func SendUserProfileResponse(w http.ResponseWriter, logger *logrus.Logger, ar re
 	w.Write(respJSON)
 }
 
-func SendUpdateResponse(w http.ResponseWriter, logger *logrus.Logger, sr response.UpdateUserInfo) {
+func SendInfoResponse(w http.ResponseWriter, logger *logrus.Logger, sr response.ResponseInfo) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 

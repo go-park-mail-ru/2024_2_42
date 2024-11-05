@@ -52,7 +52,7 @@ func (urc *UserRepositoryController) CreateUser(user *models.User) error {
 	if userID == 0 {
 		return internal_errors.ErrBadUserInputData
 	}
-	urc.logger.WithField("user was succesful created with userID", userID).Info("createUser func")
+	urc.logger.WithField("user was succesfully created with userID", userID).Info("createUser func")
 	return nil
 }
 
@@ -128,7 +128,7 @@ func (urc *UserRepositoryController) DeleteUserByID(userID uint64) error {
 	if err != nil {
 		return internal_errors.ErrUserDoesntExists
 	}
-	urc.logger.WithField("user was succesfil deleted with userID", userID).Info()
+	urc.logger.WithField("user was succesfully deleted with userID", userID).Info()
 	return nil
 }
 

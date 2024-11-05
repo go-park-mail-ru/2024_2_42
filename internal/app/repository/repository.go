@@ -16,10 +16,6 @@ type (
 		sm *session.SessionsManager
 	}
 
-	FeedRepositoryController struct {
-		mu *sync.RWMutex
-	}
-
 	MediaRepositoryController struct {
 		client          *minio.Client
 		ImageBucketName string

@@ -19,7 +19,7 @@ services:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - DATABASE_HOST=${DB_HOST}
-    volumes:
+    volumes:  
       - .:/docker-entrypoint-initdb.d/
     healthcheck:
       test: "pg_isready --username=postgres && psql --username=postgres --list" 
