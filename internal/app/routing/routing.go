@@ -135,7 +135,7 @@ func Route() {
 
 	server := http.Server{
 		Addr:    routerParams.MainServerPort,
-		Handler: middleware.CORS(middleware.RequestID(middleware.Panic(logger, mux))),
+		Handler: middleware.AccessLog(logger, middleware.CORS(middleware.RequestID(middleware.Panic(logger, mux)))),
 	}
 
 	logger.WithField("starting server at ", routerParams.MainServerPort).Info()
