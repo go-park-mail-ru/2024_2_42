@@ -1,6 +1,7 @@
-package repository
+package mediarepository
 
 import (
+	"database/sql"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/minio/minio-go"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -28,7 +30,16 @@ const (
 	minioUploadFileType = "application/octet-stream"
 )
 
-func NewMediaRepository() (usecase.MediaRepository, error) {
+type MediaRepositoryController struct {
+	db              *sql.DB
+	logger          *logrus.Logger
+	client          *minio.Client
+	ImageBucketName string
+	VideoBucketName string
+	AudioBucketName string
+}
+
+func NewMediaRepository(db *sql.DB, logger *logrus.Logger) (usecase.MediaRepository, error) {
 	config := s3.NewMinioParams()
 	client, err := NewMinioClient(config)
 	if err != nil {
@@ -36,6 +47,8 @@ func NewMediaRepository() (usecase.MediaRepository, error) {
 	}
 
 	return &MediaRepositoryController{
+		db: db,
+		logger: logger,
 		client:          client,
 		ImageBucketName: config.ImageBucketName,
 		VideoBucketName: config.VideoBucketName,
@@ -67,11 +80,6 @@ func (mrc *MediaRepositoryController) HasCorrectContentType(fileType string) boo
 		fileType == mimeAudWavType
 }
 
-func (mrc *MediaRepositoryController) GetMedia(bucketName, objectName string) ([]byte, error) {
-	// not implemented
-	return []byte{}, nil
-}
-
 func (mrc *MediaRepositoryController) UploadMedia(bucketName, fileName string, media io.Reader, mediaSize int64) (string, error) {
 	objectName := uuid.New().String() + filepath.Ext(fileName)
 	_, err := mrc.client.PutObject(bucketName, objectName, media, mediaSize, minio.PutObjectOptions{
@@ -81,5 +89,11 @@ func (mrc *MediaRepositoryController) UploadMedia(bucketName, fileName string, m
 		return "", err
 	}
 
-	return objectName, nil
+	return mrc.GeneratePublicMediaUrl(bucketName, objectName), nil
+}
+
+func (mrc *MediaRepositoryController) GeneratePublicMediaUrl(bucketName, objectName string) string {
+	config := s3.NewMinioParams()
+	publicUrl := "http://" + config.Endpoint + "/" + bucketName + "/" + objectName
+	return publicUrl
 }
