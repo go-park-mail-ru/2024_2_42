@@ -52,12 +52,23 @@ var (
 	ErrExpectedMultipartContentType = errors.New("запрос имеет Content-Type не multipart")
 	ErrWrongMediaContentType        = errors.New("загружаемое медиа имеет некорректный Content-Type")
 
-	//Postgres
+	// Postgres
 	ErrUserAlreadyExists = errors.New("пользователь уже существует")
 	ErrUserDoesntExists  = errors.New("пользователя не существует")
 	ErrBadPassword       = errors.New("некорректный пароль")
 	ErrBadUserInputData  = errors.New("ведена некорректная информация о пользователе")
 	ErrBadUserID         = errors.New("id пользователя не соответсвует текущему")
+
+	ErrPinDoesntExists = errors.New("пин не существует")
+	ErrBadPinInputData = errors.New("передана некорректная информация о пине")
+	ErrBadPinID        = errors.New("id пина не соответствует текущему")
+
+	ErrBoardDoesntExists = errors.New("доска не существует")
+	ErrBadBoardInputData = errors.New("передана некорректная информация о доске")
+	ErrBadBoardID        = errors.New("id доски не соответствует текущему")
+
+	ErrBookmarkDoesntExists = errors.New("закладка не существует")
+	ErrBadBookmarkInputData = errors.New("передана некорректная информация о закладке")
 )
 
 var ErrorMapping = map[error]struct {
@@ -96,6 +107,24 @@ var ErrorMapping = map[error]struct {
 	// Media
 	ErrExpectedMultipartContentType: {HttpCode: 400, InternalCode: 19},
 	ErrWrongMediaContentType:        {HttpCode: 400, InternalCode: 20},
+
+	// Postgres
+	ErrUserAlreadyExists: {HttpCode: 400, InternalCode: 21},
+	ErrUserDoesntExists:  {HttpCode: 400, InternalCode: 22},
+	ErrBadPassword:       {HttpCode: 400, InternalCode: 23},
+	ErrBadUserInputData:  {HttpCode: 400, InternalCode: 24},
+	ErrBadUserID:         {HttpCode: 400, InternalCode: 25},
+
+	ErrPinDoesntExists: {HttpCode: 400, InternalCode: 26},
+	ErrBadPinInputData: {HttpCode: 400, InternalCode: 27},
+	ErrBadPinID:        {HttpCode: 400, InternalCode: 28},
+
+	ErrBoardDoesntExists: {HttpCode: 400, InternalCode: 29},
+	ErrBadBoardInputData: {HttpCode: 400, InternalCode: 30},
+	ErrBadBoardID:        {HttpCode: 400, InternalCode: 31},
+
+	ErrBookmarkDoesntExists: {HttpCode: 400, InternalCode: 32},
+	ErrBadBookmarkInputData: {HttpCode: 400, InternalCode: 33},
 }
 
 func IsInternal(err error) bool {

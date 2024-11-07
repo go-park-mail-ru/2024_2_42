@@ -214,8 +214,10 @@ func (udc *UserDeliveryController) UpdateUserInfo(w http.ResponseWriter, r *http
 		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
 			Internal: err,
 		})
+		return
 	}
-	SendUpdateResponse(w, udc.Logger, response.UpdateUserInfo{
-		Message: "Succes!",
+
+	SendInfoResponse(w, udc.Logger, response.ResponseInfo{
+		Message: successfullUpdateMessage,
 	})
 }

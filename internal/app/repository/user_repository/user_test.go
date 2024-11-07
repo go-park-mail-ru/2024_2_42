@@ -18,7 +18,6 @@ import (
 
 type Test struct {
 	userID        uint64
-	resProfile    *models.User
 	expectedError error
 	dbError       error
 }

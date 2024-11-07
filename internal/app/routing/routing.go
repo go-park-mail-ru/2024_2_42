@@ -8,8 +8,8 @@ import (
 	"pinset/internal/app/db"
 	delivery "pinset/internal/app/delivery/http"
 	"pinset/internal/app/middleware"
-	"pinset/internal/app/repository"
-	"pinset/internal/app/repository/userRepository"
+	mediarepository "pinset/internal/app/repository/media_repository"
+	userRepository "pinset/internal/app/repository/user_repository"
 	"pinset/internal/app/usecase"
 
 	"pinset/pkg/logger"
@@ -29,18 +29,32 @@ type (
 		UpdateUserInfo(w http.ResponseWriter, r *http.Request)
 	}
 
-	FeedDelivery interface {
-		Feed(w http.ResponseWriter, r *http.Request)
-	}
-
 	MediaDelivery interface {
-		GetMedia(w http.ResponseWriter, r *http.Request)
-		UploadMedia(w http.ResponseWriter, r *http.Request)
+		Feed(w http.ResponseWriter, r *http.Request)
+
+		GetPinPreview(w http.ResponseWriter, r *http.Request)
+		GetPinPage(w http.ResponseWriter, r *http.Request)
+		CreatePin(w http.ResponseWriter, r *http.Request)
+		UpdatePin(w http.ResponseWriter, r *http.Request)
+		DeletePin(w http.ResponseWriter, r *http.Request)
+
+		GetUserBoards(w http.ResponseWriter, r *http.Request)
+		GetBoard(w http.ResponseWriter, r *http.Request)
+		CreateBoard(w http.ResponseWriter, r *http.Request)
+		UpdateBoard(w http.ResponseWriter, r *http.Request)
+		DeleteBoard(w http.ResponseWriter, r *http.Request)
+
+		GetBookmark(w http.ResponseWriter, r *http.Request)
+		CreateBookmark(w http.ResponseWriter, r *http.Request)
+		DeleteBookmark(w http.ResponseWriter, r *http.Request)
 	}
 )
 
 // Routings Main Handler
 type RoutingHandler struct {
+	TestLogger  *logrus.Logger
+	Mux         *mux.Router
+	UserUsecase delivery.UserUsecase
 	logger      *logrus.Logger
 	mux         *mux.Router
 	userUsecase delivery.UserUsecase
@@ -70,19 +84,6 @@ func InitializeUserLayerRoutings(rh *RoutingHandler, userHandlers UserDelivery) 
 	rh.mux.HandleFunc("/signup", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.SignUp)).Methods("POST")
 	rh.mux.HandleFunc("/is_authorized", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.IsAuthorized)).Methods("GET")
 	rh.mux.HandleFunc("/user/{user_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.GetUserInfo)).Methods("GET")
-
-}
-
-func NewFeedDelivery(logger *logrus.Logger, usecase delivery.FeedUsecase) FeedDelivery {
-	return &delivery.FeedDeliveryController{
-		Usecase: usecase,
-		Logger:  logger,
-	}
-}
-
-// Feed layer handlers
-func InitializeFeedLayerRoutings(rh *RoutingHandler, feedHandlers FeedDelivery) {
-	rh.mux.HandleFunc("/feed", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, feedHandlers.Feed)).Methods("GET")
 }
 
 func NewMediaDelivery(logger *logrus.Logger, usecase delivery.MediaUsecase) MediaDelivery {
@@ -94,7 +95,23 @@ func NewMediaDelivery(logger *logrus.Logger, usecase delivery.MediaUsecase) Medi
 
 // Media layer handlers
 func InitializeMediaLayerRoutings(rh *RoutingHandler, mediaHandlers MediaDelivery) {
-	rh.mux.HandleFunc("POST /create-pin", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.UploadMedia))
+	rh.mux.HandleFunc("/feed", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.Feed)).Methods("GET")
+
+	rh.mux.HandleFunc("/create-pin", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.CreatePin)).Methods("POST")
+	rh.mux.HandleFunc("/pins/preview/{pin_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetPinPreview)).Methods("GET")
+	rh.mux.HandleFunc("/pins/page/{pin_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetPinPage)).Methods("GET")
+	rh.mux.HandleFunc("/pins/update/{pin_id}", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.UpdatePin)).Methods("PUT")
+	rh.mux.HandleFunc("/pins/delete/{pin_id}", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.DeletePin)).Methods("DELETE")
+
+	rh.mux.HandleFunc("/create-board", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.CreateBoard)).Methods("POST")
+	rh.mux.HandleFunc("/boards/{user_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetUserBoards)).Methods("GET")
+	rh.mux.HandleFunc("/boards/{board_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetBoard)).Methods("GET")
+	rh.mux.HandleFunc("/boards/update/{board_id}", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.UpdateBoard)).Methods("PUT")
+	rh.mux.HandleFunc("/boards/delete/{board_id}", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.DeleteBoard)).Methods("DELETE")
+
+	rh.mux.HandleFunc("/create-bookmark", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.CreateBookmark)).Methods("POST")
+	rh.mux.HandleFunc("/bookmark/{bookmark_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetBookmark)).Methods("GET")
+	rh.mux.HandleFunc("/bookmark/delete/{bookmark_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.DeleteBookmark)).Methods("DELETE")
 }
 
 func Route() {
@@ -112,16 +129,10 @@ func Route() {
 	userUsecase := usecase.NewUserUsecase(userRepo)
 	userDelivery := NewUserDelivery(logger, userUsecase)
 
-	feedRepo := repository.NewFeedRepository()
-	feedUsecase := usecase.NewFeedUsecase(feedRepo)
-	feedDelivery := NewFeedDelivery(logger, feedUsecase)
-
-	mediaRepo, mediaErr := repository.NewMediaRepository()
+	mediaRepo, mediaErr := mediarepository.NewMediaRepository(repo, logger)
 	if mediaErr != nil {
 		logger.Fatal(mediaErr)
 	}
-
-	logger.Info("MinioRepo created succesful!")
 
 	mediaUsecase := usecase.NewMediaUsecase(mediaRepo)
 	mediaDelivery := NewMediaDelivery(logger, mediaUsecase)
@@ -130,12 +141,11 @@ func Route() {
 
 	// Layers initialization
 	InitializeUserLayerRoutings(rh, userDelivery)
-	InitializeFeedLayerRoutings(rh, feedDelivery)
 	InitializeMediaLayerRoutings(rh, mediaDelivery)
 
 	server := http.Server{
 		Addr:    routerParams.MainServerPort,
-		Handler: middleware.CORS(middleware.RequestID(middleware.Panic(logger, mux))),
+		Handler: middleware.AccessLog(logger, middleware.CORS(middleware.RequestID(middleware.Panic(logger, mux)))),
 	}
 
 	logger.WithField("starting server at ", routerParams.MainServerPort).Info()

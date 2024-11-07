@@ -8,6 +8,8 @@ import (
 	"pinset/internal/app/session"
 )
 
+//go:generate mockgen -source=usecase.go -destination=mocks/usecase_mock.go
+
 // Repository interfaces
 type (
 	UserRepository interface {
@@ -31,15 +33,30 @@ type (
 		Session() *session.SessionsManager
 	}
 
-	FeedRepository interface {
-		GetPins() []models.Pin
-		InsertPin(models.Pin)
-	}
-
 	MediaRepository interface {
+		CreatePin(pin *models.Pin) error
+		GetAllPins() ([]*models.Pin, error)
+		GetPinPreviewInfoByPinID(pinID uint64) (*models.Pin, error)
+		GetPinPageInfoByPinID(pinID uint64) (*models.Pin, error)
+		GetPinAuthorNameByUserID(userID uint64) (*models.User, error)
+		UpdatePinInfoByPinID(pin *models.Pin) error
+		UpdatePinViewsByPinID(pinID uint64) error
+		UpdatePinUpdateTimeByPinID() error
+		DeletePinByPinID(pinID uint64) error
+		GetAllCommentariesByPinID(pinID uint64) ([]*models.Comment, error)
+		GetPinBookmarksNumberByPinID(pinID uint64) (uint64, error)
+		GetBookmarkOnUserPin(ownerID, pinID uint64) (uint64, error)
+		CreatePinBookmark(bookmark *models.Bookmark) error
+		DeletePinBookmarkByBookmarkID(bookmarkID uint64) error
+
+		GetAllBoardsByOwnerID(ownerID uint64) ([]*models.Board, error)
+		GetBoardByBoardID(boardID uint64) (*models.Board, error)
+		CreateBoard(board *models.Board) error
+		UpdateBoardByBoardID(board *models.Board) error
+		DeleteBoardByBoardID(boardID uint64) error
+
 		GetBucketNameForContentType(fileType string) string
 		HasCorrectContentType(string) bool
-		GetMedia(string, string) ([]byte, error)
 		UploadMedia(string, string, io.Reader, int64) (string, error)
 	}
 )
@@ -49,10 +66,6 @@ type (
 	UserUsecaseController struct {
 		repo           UserRepository
 		authParameters configs.AuthParams
-	}
-
-	FeedUsecaseController struct {
-		repo FeedRepository
 	}
 
 	MediaUsecaseController struct {

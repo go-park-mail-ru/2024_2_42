@@ -10,6 +10,7 @@ import (
 type Board struct {
 	BoardID       uint64    `json:"board_id"`
 	OwnerID       uint64    `json:"owner_id"`
+	Cover         string    `json:"board_cover"`
 	Name          string    `json:"board_name"`
 	Description   string    `json:"board_description"`
 	Public        bool      `json:"public"`

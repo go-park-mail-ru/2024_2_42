@@ -1,5 +1,5 @@
 package response
 
-type UpdateUserInfo struct {
+type ResponseInfo struct {
 	Message string `json:"message"`
 }

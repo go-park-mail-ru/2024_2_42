@@ -71,6 +71,14 @@ CREATE TABLE IF NOT EXISTS pin (
         NOT NULL,
     related_link TEXT
         NOT NULL,
+    geolocation TEXT,
+    views INT DEFAULT 0,
+    comments_allowed BOOLEAN 
+        NOT NULL
+        DEFAULT true,
+    awards_allowed BOOLEAN 
+        NOT NULL
+        DEFAULT true,
     creation_time TIMESTAMPTZ DEFAULT NOW(),
     update_time TIMESTAMPTZ DEFAULT NOW()
 );
@@ -115,10 +123,13 @@ CREATE TABLE IF NOT EXISTS section (
 CREATE TABLE IF NOT EXISTS bookmark (
     bookmark_id INT
         GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    owner_id INT REFERENCES "user"(user_id)
+        ON DELETE CASCADE
+        NOT NULL,
     pin_id INT REFERENCES pin(pin_id)
         ON DELETE CASCADE
         NOT NULL,
-    bookmark_time TIMESTAMPTZ
+    bookmark_time TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Saved pin to board table:

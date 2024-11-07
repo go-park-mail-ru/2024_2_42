@@ -1,4 +1,4 @@
-package repository
+package mediarepository
 
 import (
 	"pinset/configs/s3"
