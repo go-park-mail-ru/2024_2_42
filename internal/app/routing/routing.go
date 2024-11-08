@@ -47,6 +47,7 @@ type (
 		GetBookmark(w http.ResponseWriter, r *http.Request)
 		CreateBookmark(w http.ResponseWriter, r *http.Request)
 		DeleteBookmark(w http.ResponseWriter, r *http.Request)
+		UploadMedia(w http.ResponseWriter, r *http.Request)
 	}
 )
 
@@ -95,9 +96,11 @@ func NewMediaDelivery(logger *logrus.Logger, usecase delivery.MediaUsecase) Medi
 
 // Media layer handlers
 func InitializeMediaLayerRoutings(rh *RoutingHandler, mediaHandlers MediaDelivery) {
+	rh.mux.HandleFunc("/image/upload", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.UploadMedia)).Methods("POST")
+
 	rh.mux.HandleFunc("/feed", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.Feed)).Methods("GET")
 
-	rh.mux.HandleFunc("/create-pin", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.CreatePin)).Methods("POST")
+	rh.mux.HandleFunc("/create-pin", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.CreatePin)).Methods("POST")
 	rh.mux.HandleFunc("/pins/preview/{pin_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetPinPreview)).Methods("GET")
 	rh.mux.HandleFunc("/pins/page/{pin_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetPinPage)).Methods("GET")
 	rh.mux.HandleFunc("/pins/update/{pin_id}", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.UpdatePin)).Methods("PUT")
