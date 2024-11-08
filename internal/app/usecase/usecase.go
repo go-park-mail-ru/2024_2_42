@@ -49,6 +49,9 @@ type (
 		CreatePinBookmark(bookmark *models.Bookmark) error
 		DeletePinBookmarkByBookmarkID(bookmarkID uint64) error
 
+		GetBoardPinsByBoardID(boardID uint64) ([]uint64, error)
+		AddPinToBoard(boardID uint64, pinID uint64) error
+
 		GetAllBoardsByOwnerID(ownerID uint64) ([]*models.Board, error)
 		GetBoardByBoardID(boardID uint64) (*models.Board, error)
 		CreateBoard(board *models.Board) error

@@ -246,6 +246,65 @@ func (mdc *MediaDeliveryController) GetPinPage(w http.ResponseWriter, r *http.Re
 	})
 }
 
+func (mdc *MediaDeliveryController) GetBoardPins(w http.ResponseWriter, r *http.Request) {
+	boardIDStr := mux.Vars(r)["board_id"]
+	boardID, err := strconv.ParseUint(boardIDStr, 10, 64)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+
+	pins, err := mdc.Usecase.GetBoardPins(boardID)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(pins); err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInternalServerError,
+		})
+		return
+	}
+}
+
+func (mdc *MediaDeliveryController) AddPinToBoard(w http.ResponseWriter, r *http.Request) {
+	boardIDStr := mux.Vars(r)["board_id"]
+	pinIDStr := mux.Vars(r)["pin_id"]
+
+	boardID, err := strconv.ParseUint(boardIDStr, 10, 64)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+
+	pinID, err := strconv.ParseUint(pinIDStr, 10, 64)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+
+	err = mdc.Usecase.AddPinToBoard(boardID, pinID)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+
+	SendInfoResponse(w, mdc.Logger, response.ResponseInfo{
+		Message: successfullUpdateMessage,
+	})
+}
+
 func (mdc *MediaDeliveryController) UpdatePin(w http.ResponseWriter, r *http.Request) {
 	contentType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil {

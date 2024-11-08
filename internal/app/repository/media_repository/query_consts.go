@@ -33,4 +33,7 @@ const (
 	CreateBoard          = `INSERT INTO board (owner_id, name, description, public) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING board_id;`
 	UpdateBoardByBoardID = `UPDATE board SET name = $1, description = $2, public = $3 RETURNING board_id;`
 	DeleteBoardByBoardID = `DELETE FROM board WHERE board_id = $1`
+
+	AddPinToBoard         = `INSERT INTO saved_pin_to_board (board_id, pin_id) VALUES ($1, $2) RETURNING board_id`
+	GetBoardPinsByBoardID = `SELECT pin_id FROM saved_pin_to_board WHERE board_id = $1`
 )

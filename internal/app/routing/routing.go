@@ -48,6 +48,8 @@ type (
 		CreateBoard(w http.ResponseWriter, r *http.Request)
 		UpdateBoard(w http.ResponseWriter, r *http.Request)
 		DeleteBoard(w http.ResponseWriter, r *http.Request)
+		AddPinToBoard(w http.ResponseWriter, r *http.Request)
+		GetBoardPins(w http.ResponseWriter, r *http.Request)
 
 		GetBookmark(w http.ResponseWriter, r *http.Request)
 		CreateBookmark(w http.ResponseWriter, r *http.Request)
@@ -116,6 +118,9 @@ func InitializeMediaLayerRoutings(rh *RoutingHandler, mediaHandlers MediaDeliver
 	rh.mux.HandleFunc("/boards/{board_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetBoard)).Methods("GET")
 	rh.mux.HandleFunc("/boards/update/{board_id}", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.UpdateBoard)).Methods("PUT")
 	rh.mux.HandleFunc("/boards/delete/{board_id}", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.DeleteBoard)).Methods("DELETE")
+
+	rh.mux.HandleFunc("/boards/{board_id}/addpin/{pin_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.AddPinToBoard)).Methods("POST")
+	rh.mux.HandleFunc("/boards/{board_id}/pins", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetBoardPins)).Methods("GET")
 
 	rh.mux.HandleFunc("/create-bookmark", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.CreateBookmark)).Methods("POST")
 	rh.mux.HandleFunc("/bookmark/{bookmark_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetBookmark)).Methods("GET")
