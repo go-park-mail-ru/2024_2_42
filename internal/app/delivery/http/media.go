@@ -124,6 +124,7 @@ func (mdc *MediaDeliveryController) CreatePin(w http.ResponseWriter, r *http.Req
 
 		pin.Sanitize()
 		pin.MediaUrl = lastUploadedMediaUrl
+		pin.RelatedLink = lastUploadedMediaUrl
 
 		mdc.Logger.WithFields(logrus.Fields{
 			"media_url": lastUploadedMediaUrl,
@@ -191,7 +192,7 @@ func (mdc *MediaDeliveryController) GetPinPreview(w http.ResponseWriter, r *http
 
 	SendPinPreviewResponse(w, mdc.Logger, response.PinPreviewResponse{
 		AuthorName:            author.UserName,
-		AuthorAvatarUrl:       author.AvatarUrl,
+		AuthorAvatarUrl:       *author.AvatarUrl,
 		AuthorFollowersNumber: 0,
 		MediaUrl:              pin.MediaUrl,
 		ViewsNumber:           pin.Views,
@@ -235,7 +236,7 @@ func (mdc *MediaDeliveryController) GetPinPage(w http.ResponseWriter, r *http.Re
 
 	SendPinPageResponse(w, mdc.Logger, response.PinPageResponse{
 		AuthorName:            author.UserName,
-		AuthorAvatarUrl:       author.AvatarUrl,
+		AuthorAvatarUrl:       *author.AvatarUrl,
 		AuthorFollowersNumber: 0,
 		MediaUrl:              pin.MediaUrl,
 		Title:                 pin.Title,

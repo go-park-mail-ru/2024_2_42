@@ -207,7 +207,7 @@ func (udc *UserDeliveryController) UpdateUserInfo(w http.ResponseWriter, r *http
 		Description: req.Description,
 		BirthTime:   req.BirthTime,
 		Gender:      req.Gender,
-		AvatarUrl:   req.AvatarUrl,
+		AvatarUrl:   &req.AvatarUrl,
 	})
 
 	if err != nil {

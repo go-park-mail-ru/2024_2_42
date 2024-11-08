@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"pinset/configs"
 	delivery "pinset/internal/app/delivery/http"
@@ -16,14 +15,12 @@ import (
 func requestWithUserContext(r *http.Request, uc delivery.UserUsecase) (*http.Request, error) {
 	c, err := r.Cookie(session.SessionTokenCookieKey)
 	if err != nil {
-		fmt.Println("requestWithCTX cookie", err)
 		return nil, err
 	}
 
 	sessionToken := c.Value
 
 	userId, err := uc.IsAuthorized(sessionToken)
-	fmt.Println("requestWithCTX isAuthorized", err)
 	if err != nil {
 		return nil, err
 	}
@@ -62,8 +59,6 @@ func RequiredAuthorization(logger *logrus.Logger, uc delivery.UserUsecase, next 
 func NotRequiredAuthorization(logger *logrus.Logger, uc delivery.UserUsecase, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request, err := requestWithUserContext(r, uc)
-		fmt.Println("notRequiredAuth", err)
-		fmt.Println(errors.Is(err, http.ErrNoCookie))
 		if err != nil && !errors.Is(err, http.ErrNoCookie) &&
 			!errors.Is(err, internal_errors.ErrUserIsNotAuthorized) {
 			if _, ok := internal_errors.ErrorMapping[err]; ok {

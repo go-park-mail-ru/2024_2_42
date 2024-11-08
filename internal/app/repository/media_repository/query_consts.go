@@ -4,7 +4,7 @@ package mediarepository
 const (
 	GetUserInfoForPin = `SELECT nick_name, avatar_url FROM "user" WHERE user_id = $1`
 
-	CreatePin = `INSERT INTO pin (author_id, title, description, board_id, media_url, related_link) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING RETURNING pin_id;`
+	CreatePin = `INSERT INTO pin (author_id, title, description, media_url, related_link) VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING RETURNING pin_id;`
 
 	GetAllPins               = `SELECT pin_id, author_id, media_url, title, description FROM pin;`
 	GetPinPreviewInfoByPinID = `SELECT pin_id, author_id, media_url, views FROM pin WHERE pin_id = $1;`
@@ -30,7 +30,8 @@ const (
 	GetAllBoardsByOwnerID = `SELECT * FROM BOARD WHERE owner_id = $1`
 	GetBoardByBoardID     = `SELECT * FROM board WHERE board_id = $1`
 
-	CreateBoard          = `INSERT INTO board (owner_id, name, description, public) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING board_id;`
-	UpdateBoardByBoardID = `UPDATE board SET name = $1, description = $2, public = $3 RETURNING board_id;`
-	DeleteBoardByBoardID = `DELETE FROM board WHERE board_id = $1`
+	CreateBoard           = `INSERT INTO board (owner_id, name, description, public) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING board_id;`
+	UpdateBoardByBoardID  = `UPDATE board SET name = $1, description = $2, public = $3 RETURNING board_id;`
+	DeleteBoardByBoardID  = `DELETE FROM board WHERE board_id = $1`
+	GetFirstUserBoardByID = `SELECT board_id FROM saved_board WHERE user_id = $1 ORDER BY board_id ASC LIMIT 1`
 )

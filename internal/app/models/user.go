@@ -25,7 +25,7 @@ type User struct {
 	Description        string    `json:"description"`
 	BirthTime          time.Time `json:"birth_date"`
 	Gender             string    `json:"gender"`
-	AvatarUrl          string    `json:"avatar_url"`
+	AvatarUrl          *string   `json:"avatar_url"`
 	FollowingsCount    uint64    `json:"followings_count"`
 	SubscriptionsCount uint64    `json:"subscriptions_count"`
 	CreationTime       time.Time `json:"creation_time"`
@@ -33,11 +33,11 @@ type User struct {
 }
 
 type UserPin struct {
-	UserID             uint64 `json:"user_id"`
-	NickName           string `json:"nick_name"`
-	AvatarUrl          string `json:"avatar_url"`
-	FollowingsCount    uint64 `json:"followings_count"`
-	SubscriptionsCount uint64 `json:"subscriptions_count"`
+	UserID             uint64  `json:"user_id"`
+	NickName           string  `json:"nick_name"`
+	AvatarUrl          *string `json:"avatar_url"`
+	FollowingsCount    uint64  `json:"followings_count"`
+	SubscriptionsCount uint64  `json:"subscriptions_count"`
 }
 
 func NewUser(userID uint64, userName, email, password string) User {
@@ -55,7 +55,7 @@ func (u *User) Sanitize() {
 	u.Email = html.EscapeString(u.Email)
 	u.Password = html.EscapeString(u.Password)
 	u.Gender = html.EscapeString(u.Email)
-	u.AvatarUrl = html.EscapeString(u.AvatarUrl)
+	*u.AvatarUrl = html.EscapeString(*u.AvatarUrl)
 }
 
 func (u User) Valid() error {
