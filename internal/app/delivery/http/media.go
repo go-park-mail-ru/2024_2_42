@@ -67,6 +67,7 @@ func (mdc *MediaDeliveryController) UploadMedia(w http.ResponseWriter, r *http.R
 	}).Info("Upload successfull")
 
 	SendMediaUploadResponse(w, mdc.Logger, response.MediaUploadResponse{
+		Urls:    mediaUrls,
 		Message: successfullUploadMessage,
 	})
 }

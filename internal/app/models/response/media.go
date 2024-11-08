@@ -4,7 +4,8 @@ import "time"
 
 type (
 	MediaUploadResponse struct {
-		Message string `json:"message"`
+		Urls    []string `json:"media-urls"`
+		Message string   `json:"message"`
 	}
 
 	PinCreatedResponse struct {
