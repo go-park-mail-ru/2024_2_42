@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS board (
     owner_id INT REFERENCES "user"(user_id) 
         ON DELETE CASCADE
         NOT NULL,
+    cover TEXT,
 	name TEXT 
         CONSTRAINT board_name_length CHECK (CHAR_LENGTH(name) <= 255)
         NOT NULL,

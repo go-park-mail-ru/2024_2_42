@@ -18,6 +18,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type Controller struct {
+	UserDelivery  UserDelivery
+	MediaDelivery MediaDelivery
+}
+
 // Interfaces
 type (
 	UserDelivery interface {

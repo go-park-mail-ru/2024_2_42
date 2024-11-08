@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"mime"
 	"net/http"
+	"pinset/configs"
 	"pinset/pkg/utils"
 	"strconv"
 	"strings"
@@ -73,13 +74,14 @@ func (mdc *MediaDeliveryController) UploadMedia(w http.ResponseWriter, r *http.R
 ////////////////////// PINS //////////////////////
 
 func (mdc *MediaDeliveryController) Feed(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		w.Write([]byte("For now only GET method is allowed"))
-		return
-	}
 
-	feed, err := mdc.Usecase.Feed()
+	userID, ok := r.Context().Value(configs.UserIdKey).(uint64)
+	if !ok {
+		userID = 0
+	}
+	feed, err := mdc.Usecase.Feed(userID)
 	if err != nil {
+		fmt.Println("feed error", err)
 		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
 			General: err, Internal: internal_errors.ErrInternalServerError,
 		})

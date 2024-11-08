@@ -2,6 +2,8 @@ package s3
 
 import "pinset/configs"
 
+const MinioEndPoint = "localhost:9000"
+
 type MinioParams struct {
 	Endpoint        string
 	AccessKeyID     string

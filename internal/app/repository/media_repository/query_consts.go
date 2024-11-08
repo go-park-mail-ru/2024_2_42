@@ -2,9 +2,11 @@ package mediarepository
 
 // Pins CRUD
 const (
+	GetUserInfoForPin = `SELECT nick_name, avatar_url FROM "user" WHERE user_id = $1`
+
 	CreatePin = `INSERT INTO pin (author_id, title, description, board_id, media_url, related_link) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING RETURNING pin_id;`
 
-	GetAllPins               = `SELECT pin_id, author_id, media_url FROM pin;`
+	GetAllPins               = `SELECT pin_id, author_id, media_url, title, description FROM pin;`
 	GetPinPreviewInfoByPinID = `SELECT pin_id, author_id, media_url, views FROM pin WHERE pin_id = $1;`
 	GetPinPageInfoByPinID    = `SELECT pin_id, author_id, title, description, related_link, geolocation, creation_time FROM pin WHERE pin_id = $1;`
 	GetPinAuthorByUserID     = `SELECT user_name, avatar_url FROM "user" WHERE user_id = $1`

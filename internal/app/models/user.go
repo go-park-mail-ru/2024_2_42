@@ -17,17 +17,27 @@ const (
 )
 
 type User struct {
-	UserID       uint64    `json:"user_id"`
-	UserName     string    `json:"user_name"`
-	NickName     string    `json:"nick_name"`
-	Email        string    `json:"email"`
-	Password     string    `json:"password"`
-	Description  string    `json:"description"`
-	BirthTime    time.Time `json:"birth_date"`
-	Gender       string    `json:"gender"`
-	AvatarUrl    string    `json:"avatar_url"`
-	CreationTime time.Time `json:"creation_time"`
-	UpdateTime   time.Time `json:"update_time"`
+	UserID             uint64    `json:"user_id"`
+	UserName           string    `json:"user_name"`
+	NickName           string    `json:"nick_name"`
+	Email              string    `json:"email"`
+	Password           string    `json:"password"`
+	Description        string    `json:"description"`
+	BirthTime          time.Time `json:"birth_date"`
+	Gender             string    `json:"gender"`
+	AvatarUrl          string    `json:"avatar_url"`
+	FollowingsCount    uint64    `json:"followings_count"`
+	SubscriptionsCount uint64    `json:"subscriptions_count"`
+	CreationTime       time.Time `json:"creation_time"`
+	UpdateTime         time.Time `json:"update_time"`
+}
+
+type UserPin struct {
+	UserID             uint64 `json:"user_id"`
+	NickName           string `json:"nick_name"`
+	AvatarUrl          string `json:"avatar_url"`
+	FollowingsCount    uint64 `json:"followings_count"`
+	SubscriptionsCount uint64 `json:"subscriptions_count"`
 }
 
 func NewUser(userID uint64, userName, email, password string) User {

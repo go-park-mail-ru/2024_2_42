@@ -94,7 +94,6 @@ func (mrc *MediaRepositoryController) UploadMedia(bucketName, fileName string, m
 }
 
 func (mrc *MediaRepositoryController) GeneratePublicMediaUrl(bucketName, objectName string) string {
-	config := s3.NewMinioParams()
-	publicUrl := "http://" + config.Endpoint + "/" + bucketName + "/" + objectName
+	publicUrl := "http://" + s3.MinioEndPoint + "/" + bucketName + "/" + objectName
 	return publicUrl
 }

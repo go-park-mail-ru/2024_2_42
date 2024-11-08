@@ -23,7 +23,7 @@ type (
 	MediaUsecase interface {
 		UploadMedia(files []*multipart.FileHeader) ([]string, error)
 
-		Feed() ([]*models.Pin, error)
+		Feed(uint64) ([]*models.Pin, error)
 		GetPinPreviewInfo(pinID uint64) (*models.Pin, error)
 		GetPinPageInfo(pinID uint64) (*models.Pin, error)
 		GetPinAuthorNameByUserID(userID uint64) (*models.User, error)

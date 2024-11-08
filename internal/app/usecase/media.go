@@ -54,8 +54,8 @@ func (muc *MediaUsecaseController) UploadMedia(files []*multipart.FileHeader) ([
 
 //////////////////////// PINS ////////////////////////////
 
-func (muc *MediaUsecaseController) Feed() ([]*models.Pin, error) {
-	return muc.repo.GetAllPins()
+func (muc *MediaUsecaseController) Feed(userID uint64) ([]*models.Pin, error) {
+	return muc.repo.GetAllPins(userID)
 }
 
 func (muc *MediaUsecaseController) GetPinPreviewInfo(pinID uint64) (*models.Pin, error) {

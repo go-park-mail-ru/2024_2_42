@@ -35,7 +35,7 @@ type (
 
 	MediaRepository interface {
 		CreatePin(pin *models.Pin) error
-		GetAllPins() ([]*models.Pin, error)
+		GetAllPins(uint64) ([]*models.Pin, error)
 		GetPinPreviewInfoByPinID(pinID uint64) (*models.Pin, error)
 		GetPinPageInfoByPinID(pinID uint64) (*models.Pin, error)
 		GetPinAuthorNameByUserID(userID uint64) (*models.User, error)

@@ -106,20 +106,22 @@ func (uuc *UserUsecaseController) IsAuthorized(token string) (uint64, error) {
 	jwtToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		return uuc.authParameters.JwtSecret, nil
 	})
-
 	if err != nil {
 		return 0, err
 	}
 
 	if !jwtToken.Valid {
+		fmt.Println("isAuthorized invalid session token", err)
 		return 0, internal_errors.ErrInvalidSessionToken
 	}
 
 	if !uuc.repo.UserHasActiveSession(token) {
+		fmt.Println("isAuthorized UserHasActiveSession", err)
 		return 0, internal_errors.ErrUserIsNotAuthorized
 	}
 
 	if claims, ok := jwtToken.Claims.(jwt.MapClaims); ok {
+		fmt.Println("jwtTokenClaims userID", uint64(claims["user_id"].(float64)))
 		return uint64(claims["user_id"].(float64)), nil
 	}
 
