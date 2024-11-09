@@ -64,9 +64,6 @@ CREATE TABLE IF NOT EXISTS pin (
         NOT NULL,
 	description TEXT
         CONSTRAINT decription_length CHECK(CHAR_LENGTH(description) <= 500),
-    board_id INT REFERENCES board(board_id)
-        ON DELETE CASCADE
-        NOT NULL,
     media_url TEXT
         NOT NULL,
     related_link TEXT
