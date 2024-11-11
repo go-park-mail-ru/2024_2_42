@@ -127,3 +127,25 @@ func (muc *MediaUsecaseController) UpdateBoard(board *models.Board) error {
 func (muc *MediaUsecaseController) DeleteBoard(boardID uint64) error {
 	return muc.repo.DeleteBoardByBoardID(boardID)
 }
+
+func (muc *MediaUsecaseController) GetBoardPins(boardID uint64) ([]*models.Pin, error) {
+	PinIDs, err := muc.repo.GetBoardPinsByBoardID(boardID)
+
+	var pins []*models.Pin
+
+	if err != nil {
+		return nil, err
+	}
+	for _, pinID := range PinIDs {
+		pin, err := muc.GetPinPageInfo(pinID)
+		if err != nil {
+			return nil, err
+		}
+		pins = append(pins, pin)
+	}
+	return pins, nil
+}
+
+func (muc *MediaUsecaseController) AddPinToBoard(boardID uint64, pinID uint64) error {
+	return muc.repo.AddPinToBoard(boardID, pinID)
+}

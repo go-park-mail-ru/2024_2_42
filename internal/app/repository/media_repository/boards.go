@@ -9,6 +9,43 @@ import (
 	"time"
 )
 
+func (mrc *MediaRepositoryController) GetBoardPinsByBoardID(boardID uint64) ([]uint64, error) {
+	rows, err := mrc.db.Query(GetBoardPinsByBoardID, boardID)
+	if err != nil {
+		return nil, fmt.Errorf("GetBoardPinsByBoardID: %w", err)
+	}
+	defer rows.Close()
+
+	var pinIDs []uint64
+
+	for rows.Next() {
+		var pinID uint64
+
+		if err := rows.Scan(&pinID); err != nil {
+			return nil, fmt.Errorf("GetBoardPinsByBoardID rows.Next: %w", err)
+		}
+
+		pinIDs = append(pinIDs, pinID)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetBoardPinsByBoardID rows.Err: %w", err)
+	}
+
+	return pinIDs, nil
+}
+
+func (mrc *MediaRepositoryController) AddPinToBoard(boardID uint64, pinID uint64) error {
+	var updatedBoardID uint64
+	err := mrc.db.QueryRow(AddPinToBoard, boardID, pinID).Scan(&updatedBoardID)
+	if err != nil {
+		return fmt.Errorf("AddPinToBoard %w", err)
+	}
+
+	mrc.logger.WithField("Pin successfully added to board", updatedBoardID).Info("addPinToBoard func")
+	return nil
+}
+
 func (mrc *MediaRepositoryController) GetAllBoardsByOwnerID(ownerID uint64) ([]*models.Board, error) {
 	rows, err := mrc.db.Query(GetAllBoardsByOwnerID, ownerID)
 	if err != nil {

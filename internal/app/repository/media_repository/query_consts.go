@@ -30,8 +30,7 @@ const (
 	GetAllBoardsByOwnerID = `SELECT * FROM BOARD WHERE owner_id = $1`
 	GetBoardByBoardID     = `SELECT * FROM board WHERE board_id = $1`
 
-	CreateBoard           = `INSERT INTO board (owner_id, name, description, public) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING board_id;`
-	UpdateBoardByBoardID  = `UPDATE board SET name = $1, description = $2, public = $3 RETURNING board_id;`
-	DeleteBoardByBoardID  = `DELETE FROM board WHERE board_id = $1`
-	GetFirstUserBoardByID = `SELECT board_id FROM saved_board WHERE user_id = $1 ORDER BY board_id ASC LIMIT 1`
+	CreateBoard          = `INSERT INTO board (owner_id, name, description, public) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING board_id;`
+	UpdateBoardByBoardID = `UPDATE board SET name = $1, description = $2, public = $3 RETURNING board_id;`
+	DeleteBoardByBoardID = `DELETE FROM board WHERE board_id = $1`
 )

@@ -33,6 +33,9 @@ type (
 		UpdatePinViewsNumber(pinID uint64) error
 		DeletePinByPinID(pinID uint64) error
 
+		GetBoardPins(boardID uint64) ([]*models.Pin, error)
+		AddPinToBoard(boardID uint64, pinID uint64) error
+
 		GetBookmarkOnUserPin(ownerID, pinID uint64) (uint64, error)
 		CreatePinBookmark(bookmark *models.Bookmark) error
 		GetPinBookmarksNumber(pinID uint64) (uint64, error)
