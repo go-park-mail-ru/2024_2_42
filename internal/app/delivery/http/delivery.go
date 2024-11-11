@@ -6,6 +6,7 @@ import (
 	"pinset/internal/app/models/request"
 	"pinset/internal/app/models/response"
 
+	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
 
@@ -47,6 +48,17 @@ type (
 		UpdateBoard(board *models.Board) error
 		DeleteBoard(boardID uint64) error
 	}
+
+	MessageUsecase interface {
+		AddOnlineUser(user *models.ChatUser)
+		IsOnlineUser(userID uint64) bool
+		GetOnlineUser(userID uint64) *models.ChatUser
+		DeleteOnlineUser(userID uint64)
+
+		GetChatMessages(chatID uint64) ([]*models.MessageInfo, error)
+		AddChatMessage(message *models.Message) (*models.MessageCreateInfo, error)
+		GetChatUsers(chatID uint64) ([]uint64, error)
+	}
 )
 
 // Controllers
@@ -59,5 +71,11 @@ type (
 	MediaDeliveryController struct {
 		Usecase MediaUsecase
 		Logger  *logrus.Logger
+	}
+
+	MessageDelieveryController struct {
+		Usecase  MessageUsecase
+		Logger   *logrus.Logger
+		Upgrader websocket.Upgrader
 	}
 )

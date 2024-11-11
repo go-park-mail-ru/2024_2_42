@@ -55,7 +55,7 @@ func (u *User) Sanitize() {
 	u.Email = html.EscapeString(u.Email)
 	u.Password = html.EscapeString(u.Password)
 	u.Gender = html.EscapeString(u.Email)
-	u.AvatarUrl = html.EscapeString(u.AvatarUrl)
+	// u.AvatarUrl = html.EscapeString(u.AvatarUrl)
 }
 
 func (u User) Valid() error {

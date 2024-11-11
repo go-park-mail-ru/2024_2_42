@@ -61,6 +61,23 @@ type (
 		GetBucketNameForContentType(fileType string) string
 		HasCorrectContentType(string) bool
 		UploadMedia(string, string, io.Reader, int64) (string, error)
+
+		CreateChat() (*models.ChatCreateInfo, error)
+		AddUserToChat(chatID uint64, userID uint64) error
+		GetChatUsers(chatID uint64) ([]uint64, error)
+		DeleteChat(chatID uint64) error
+
+		CreateMessage(msg *models.Message) (*models.MessageCreateInfo, error)
+		DeleteMessage(messageID uint64) error
+		UpdateMessage(msg *models.MessageUpdate) error
+		GetChatMessages(chatID uint64) ([]*models.MessageInfo, error)
+	}
+
+	UserOnlineRepo interface {
+		IsOnlineUser(userID uint64) bool
+		GetOnlineUser(userID uint64) *models.ChatUser
+		AddOnlineUser(user *models.ChatUser)
+		DeleteOnlineUser(userID uint64)
 	}
 )
 
@@ -73,5 +90,10 @@ type (
 
 	MediaUsecaseController struct {
 		repo MediaRepository
+	}
+
+	MessageUsecaseController struct {
+		mediaRepo      MediaRepository
+		userOnlineRepo UserOnlineRepo
 	}
 )

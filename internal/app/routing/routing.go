@@ -9,12 +9,14 @@ import (
 	delivery "pinset/internal/app/delivery/http"
 	"pinset/internal/app/middleware"
 	mediarepository "pinset/internal/app/repository/media_repository"
+	UserOnlineRepository "pinset/internal/app/repository/user_online_repository"
 	userRepository "pinset/internal/app/repository/user_repository"
 	"pinset/internal/app/usecase"
 
 	"pinset/pkg/logger"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
 
@@ -55,6 +57,11 @@ type (
 		CreateBookmark(w http.ResponseWriter, r *http.Request)
 		DeleteBookmark(w http.ResponseWriter, r *http.Request)
 		UploadMedia(w http.ResponseWriter, r *http.Request)
+	}
+
+	MessageDelivery interface {
+		HandShake(w http.ResponseWriter, r *http.Request)
+		GetAllChatMessages(w http.ResponseWriter, r *http.Request)
 	}
 )
 
@@ -125,6 +132,27 @@ func InitializeMediaLayerRoutings(rh *RoutingHandler, mediaHandlers MediaDeliver
 	rh.mux.HandleFunc("/create-bookmark", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.CreateBookmark)).Methods("POST")
 	rh.mux.HandleFunc("/bookmark/{bookmark_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetBookmark)).Methods("GET")
 	rh.mux.HandleFunc("/bookmark/delete/{bookmark_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.DeleteBookmark)).Methods("DELETE")
+
+	// rh.mux.HandleFunc("/handshake", delivery.HandShake).Methods("GET")
+}
+
+func NewMessageDelivery(logger *logrus.Logger, usecase delivery.MessageUsecase) MessageDelivery {
+	return &delivery.MessageDelieveryController{
+		Usecase: usecase,
+		Logger:  logger,
+		Upgrader: websocket.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		},
+	}
+}
+
+func InitializeMessageLayerRoutings(rh *RoutingHandler, messageHandlers MessageDelivery) {
+	rh.mux.HandleFunc("/handshake", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, messageHandlers.HandShake)).Methods("GET")
+	rh.mux.HandleFunc("/chat/messages", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, messageHandlers.GetAllChatMessages)).Methods("GET")
 }
 
 func Route() {
@@ -150,11 +178,16 @@ func Route() {
 	mediaUsecase := usecase.NewMediaUsecase(mediaRepo)
 	mediaDelivery := NewMediaDelivery(logger, mediaUsecase)
 
+	userOnlineRepo := UserOnlineRepository.NewUserOnlineRepository()
+	messageUsecase := usecase.NewMessageUsecase(userOnlineRepo, mediaRepo)
+	messageDelivery := NewMessageDelivery(logger, messageUsecase)
+
 	rh := NewRoutingHandler(logger, mux, userUsecase)
 
 	// Layers initialization
 	InitializeUserLayerRoutings(rh, userDelivery)
 	InitializeMediaLayerRoutings(rh, mediaDelivery)
+	InitializeMessageLayerRoutings(rh, messageDelivery)
 
 	server := http.Server{
 		Addr:    routerParams.MainServerPort,

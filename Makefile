@@ -6,6 +6,9 @@ start:
 stop:
 	docker compose down -v
 
+downgrade: 
+	migrate -source file://db/migrations -database postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT_OUTER}/${DB_NAME}?sslmode=${DB_SSLMODE} down
+
 migrate:
 	migrate -source file://db/migrations -database postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT_OUTER}/${DB_NAME}?sslmode=${DB_SSLMODE} up
 
