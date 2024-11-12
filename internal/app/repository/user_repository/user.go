@@ -39,21 +39,22 @@ func (urc *UserRepositoryController) GetLastUserID() (uint64, error) {
 	return userID, nil
 }
 
-func (urc *UserRepositoryController) CreateUser(user *models.User) error {
+func (urc *UserRepositoryController) CreateUser(user *models.User) (uint64, error) {
 	var userID uint64
-	err := urc.db.QueryRow(CreateUser, user.UserName, user.NickName, user.Email, user.Password).Scan(&userID)
+	var nickName string
+	err := urc.db.QueryRow(CreateUser, user.NickName, user.Email, user.Password).Scan(&userID, &nickName)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			userID = 0
 		}
-		return fmt.Errorf("psql CreateUser: %w", err)
+		return 0, fmt.Errorf("psql error with userID = %d, Nickname = %s. CreateUser: %w", userID, nickName, err)
 	}
 
 	if userID == 0 {
-		return internal_errors.ErrBadUserInputData
+		return 0, internal_errors.ErrBadUserInputData
 	}
 	urc.logger.WithField("user was succesfully created with userID", userID).Info("createUser func")
-	return nil
+	return userID, nil
 }
 
 func (urc *UserRepositoryController) CheckUserByEmail(user *models.User) (bool, error) {

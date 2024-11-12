@@ -12,7 +12,7 @@ import (
 )
 
 func (mrc *MediaRepositoryController) CreatePin(pin *models.Pin) error {
-	err := mrc.db.QueryRow(CreatePin, pin.AuthorID, pin.Title, pin.Description, pin.BoardID, pin.MediaUrl, pin.RelatedLink).Scan(&pin.PinID)
+	err := mrc.db.QueryRow(CreatePin, pin.AuthorID, pin.Title, pin.Description, pin.MediaUrl, pin.RelatedLink).Scan(&pin.PinID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			pin.PinID = 0

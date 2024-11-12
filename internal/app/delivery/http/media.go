@@ -82,7 +82,6 @@ func (mdc *MediaDeliveryController) Feed(w http.ResponseWriter, r *http.Request)
 	}
 	feed, err := mdc.Usecase.Feed(userID)
 	if err != nil {
-		fmt.Println("feed error", err)
 		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
 			General: err, Internal: internal_errors.ErrInternalServerError,
 		})
@@ -123,8 +122,8 @@ func (mdc *MediaDeliveryController) CreatePin(w http.ResponseWriter, r *http.Req
 		}
 
 		pin.Sanitize()
-		pin.MediaUrl = lastUploadedMediaUrl
-		pin.RelatedLink = lastUploadedMediaUrl
+		// pin.MediaUrl = lastUploadedMediaUrl
+		// pin.RelatedLink = lastUploadedMediaUrl
 
 		mdc.Logger.WithFields(logrus.Fields{
 			"media_url": lastUploadedMediaUrl,

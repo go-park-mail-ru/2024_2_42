@@ -78,28 +78,41 @@ func (uuc *UserUsecaseController) LogOut(token string) error {
 	return nil
 }
 
-func (uuc *UserUsecaseController) SignUp(user *models.User) error {
+func (uuc *UserUsecaseController) SignUp(user *models.User) (string, error) {
 	// Incorrect data given
 	if err := user.Valid(); err != nil {
-		return internal_errors.ErrUserDataInvalid
+		return "", internal_errors.ErrUserDataInvalid
 	}
 
 	// User already registered
 	isUserExists, err := uuc.repo.CheckUserByEmail(user)
 	if err != nil {
-		return fmt.Errorf("signUp after UserAlreadySignedUp: %w", err)
+		return "", fmt.Errorf("signUp after UserAlreadySignedUp: %w", err)
 	}
 
 	if isUserExists {
-		return internal_errors.ErrUserAlreadyExists
+		return "", internal_errors.ErrUserAlreadyExists
 	}
 
-	err = uuc.repo.CreateUser(user)
+	userID, err := uuc.repo.CreateUser(user)
 	if err != nil {
-		return fmt.Errorf("signUp after Insert: %w", err)
+		return "", fmt.Errorf("signUp after CreateUser: %w", err)
 	}
 
-	return nil
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": userID,
+		"login":   user.Email,
+		"exp":     time.Now().Add(uuc.authParameters.SessionTokenExpirationTime).Unix(),
+	})
+
+	signedToken, err := token.SignedString(uuc.authParameters.JwtSecret)
+	if err != nil {
+		return "", internal_errors.ErrCantSignSessionToken
+	}
+
+	uuc.repo.Session().Create(signedToken, userID)
+
+	return signedToken, nil
 }
 
 func (uuc *UserUsecaseController) IsAuthorized(token string) (uint64, error) {
@@ -111,35 +124,27 @@ func (uuc *UserUsecaseController) IsAuthorized(token string) (uint64, error) {
 	}
 
 	if !jwtToken.Valid {
-		fmt.Println("isAuthorized invalid session token", err)
 		return 0, internal_errors.ErrInvalidSessionToken
 	}
 
 	if !uuc.repo.UserHasActiveSession(token) {
-		fmt.Println("isAuthorized UserHasActiveSession", err)
 		return 0, internal_errors.ErrUserIsNotAuthorized
 	}
 
 	if claims, ok := jwtToken.Claims.(jwt.MapClaims); ok {
-		fmt.Println("jwtTokenClaims userID", uint64(claims["user_id"].(float64)))
 		return uint64(claims["user_id"].(float64)), nil
 	}
 
 	return 0, internal_errors.ErrBadRequest
 }
 
-func (uuc *UserUsecaseController) UpdateUserInfo(token string, user *models.User) error {
-	userID, err := uuc.IsAuthorized(token)
+func (uuc *UserUsecaseController) UpdateUserInfo(user *models.User) error {
 
-	if err != nil {
-		return fmt.Errorf("updateUserPasswordByID isAuthorized: %w", err)
-	}
-
-	if userID != user.UserID {
+	if user.UserID != 0 {
 		return internal_errors.ErrBadUserID
 	}
 
-	err = uuc.repo.UpdateUserInfo(user)
+	err := uuc.repo.UpdateUserInfo(user)
 	if err != nil {
 		return fmt.Errorf("getUserInfoByID usecase: %w", err)
 	}

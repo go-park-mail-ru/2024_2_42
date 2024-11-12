@@ -3,7 +3,7 @@ package userRepository
 const (
 	// User
 	GetLastUserID          = `SELECT user_id FROM "user" ORDER BY user_id DESC LIMIT 1;`
-	CreateUser             = `INSERT INTO "user" (user_name, nick_name, email, password) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING user_id;`
+	CreateUser             = `INSERT INTO "user" (nick_name, email, password) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING RETURNING user_id, nick_name;`
 	CheckUserCredentials   = `SELECT password FROM "user" WHERE email = $1 LIMIT 1;`
 	CheckUserByEmail       = `SELECT user_id FROM "user" WHERE email = $1 LIMIT 1;`
 	GetUserInfoByID        = `SELECT user_name, nick_name, description, birth_time, gender, avatar_url FROM "user" WHERE user_id = $1 LIMIT 1;`

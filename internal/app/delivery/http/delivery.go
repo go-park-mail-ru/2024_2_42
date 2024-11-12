@@ -14,10 +14,10 @@ type (
 	UserUsecase interface {
 		LogIn(request.LoginRequest) (string, error)
 		LogOut(string) error
-		SignUp(user *models.User) error
+		SignUp(user *models.User) (string, error)
 		IsAuthorized(string) (uint64, error)
 		GetUserInfo(*models.User) (response.UserProfileResponse, error)
-		UpdateUserInfo(string, *models.User) error
+		UpdateUserInfo(*models.User) error
 	}
 
 	MediaUsecase interface {

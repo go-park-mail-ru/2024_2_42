@@ -10,7 +10,7 @@ import (
 )
 
 func (mrc *MediaRepositoryController) GetBoardPinsByBoardID(boardID uint64) ([]uint64, error) {
-	rows, err := mrc.db.Query(GetBoardPinsByBoardID, boardID)
+	rows, err := mrc.db.Query(GetPinsIDByBoardID, boardID)
 	if err != nil {
 		return nil, fmt.Errorf("GetBoardPinsByBoardID: %w", err)
 	}

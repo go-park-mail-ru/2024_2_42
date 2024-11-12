@@ -14,7 +14,7 @@ import (
 type (
 	UserRepository interface {
 		GetLastUserID() (uint64, error)
-		CreateUser(*models.User) error
+		CreateUser(*models.User) (uint64, error)
 		CheckUserByEmail(*models.User) (bool, error)
 		GetUserInfo(*models.User) (response.UserProfileResponse, error)
 		CheckUserCredentials(*models.User) error

@@ -10,7 +10,6 @@ import (
 )
 
 const (
-	minUserNameLength = 4
 	minNickNameLength = 4
 	minPasswordLength = 8
 	restrictionAge    = 18
@@ -55,11 +54,10 @@ func (u *User) Sanitize() {
 	u.Email = html.EscapeString(u.Email)
 	u.Password = html.EscapeString(u.Password)
 	u.Gender = html.EscapeString(u.Email)
-	*u.AvatarUrl = html.EscapeString(*u.AvatarUrl)
 }
 
 func (u User) Valid() error {
-	if len(u.UserName) >= minUserNameLength &&
+	if len(u.NickName) >= minNickNameLength &&
 		len(u.Password) >= minPasswordLength &&
 		u.BirthTime.Before(time.Now()) &&
 		u.emailValid() {
