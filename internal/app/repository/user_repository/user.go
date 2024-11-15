@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"pinset/internal/app/models"
-	"pinset/internal/app/models/response"
 	"pinset/internal/app/session"
 	"pinset/internal/app/usecase"
 	internal_errors "pinset/internal/errors"
@@ -27,9 +26,9 @@ func NewUserRepository(db *sql.DB, logger *logrus.Logger) usecase.UserRepository
 	}
 }
 
-func (urc *UserRepositoryController) GetLastUserID() (uint64, error) {
+func (urc *UserRepositoryController) GetUserIDWithEmail(email string) (uint64, error) {
 	var userID uint64
-	err := urc.db.QueryRow(GetLastUserID).Scan(&userID)
+	err := urc.db.QueryRow(GetUserIDByEmail, email).Scan(&userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return 1, nil
@@ -84,15 +83,21 @@ func (urc *UserRepositoryController) CheckUserCredentials(user *models.User) err
 	return nil
 }
 
-func (urc *UserRepositoryController) GetUserInfo(user *models.User) (response.UserProfileResponse, error) {
-	var userInfo response.UserProfileResponse
+func (urc *UserRepositoryController) GetUserInfo(user *models.User, currUserID uint64) (*models.UserProfile, error) {
+	var userInfo *models.UserProfile = &models.UserProfile{}
 
-	err := urc.db.QueryRow(GetUserInfoByID, user.UserID).Scan(&userInfo.UserName, &userInfo.NickName, &userInfo.Description, &userInfo.BirthTime, &userInfo.Gender, &userInfo.AvatarUrl)
+	err := urc.db.QueryRow(GetUserInfoByID, user.UserID).Scan(
+		&userInfo.UserName,
+		&userInfo.NickName,
+		&userInfo.Description,
+		&userInfo.BirthTime,
+		&userInfo.Gender,
+		&userInfo.AvatarUrl)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return response.UserProfileResponse{}, internal_errors.ErrUserDoesntExists
+			return &models.UserProfile{}, internal_errors.ErrUserDoesntExists
 		}
-		return response.UserProfileResponse{}, fmt.Errorf("psql GetUserByID: %w", err)
+		return &models.UserProfile{}, fmt.Errorf("psql GetUserByID: %w", err)
 	}
 	return userInfo, nil
 }
@@ -202,29 +207,45 @@ func (urc *UserRepositoryController) GetAllSubscriptions(ownerID uint64, followe
 }
 
 func (urc *UserRepositoryController) GetFollowingsCount(follower_id uint64) (uint64, error) {
-	var followingsCount uint64
+	var followingsCount int64
 	err := urc.db.QueryRow(GetFollowingsCount, follower_id).Scan(&followingsCount)
+
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return followingsCount, nil
+			return uint64(followingsCount), nil
 		}
 		return 0, fmt.Errorf("psql GetFollowingsCount: %w", err)
 	}
 
-	return followingsCount, nil
+	return uint64(followingsCount), nil
 }
 
 func (urc *UserRepositoryController) GetSubsriptionsCount(ownder_id uint64) (uint64, error) {
-	var subscriptionsCount uint64
+	var subscriptionsCount int64
 	err := urc.db.QueryRow(GetSubsriptionsCount, ownder_id).Scan(&subscriptionsCount)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return subscriptionsCount, nil
+			return uint64(subscriptionsCount), nil
 		}
 		return 0, fmt.Errorf("psql GetlSubsriptionsCount: %w", err)
 	}
 
-	return subscriptionsCount, nil
+	return uint64(subscriptionsCount), nil
+}
+
+func (urc *UserRepositoryController) GetUserAvatar(userID uint64) (string, error) {
+	var userAvatar *string
+	err := urc.db.QueryRow(GetUserAvatar, userID).Scan(&userAvatar)
+	if err != nil {
+		return "", fmt.Errorf("getUserAvatar repo: %w", err)
+	}
+
+	avatar_url := ""
+	if userAvatar != nil {
+		avatar_url = *userAvatar
+	}
+
+	return avatar_url, nil
 }
 
 func (urc *UserRepositoryController) UserHasActiveSession(token string) bool {

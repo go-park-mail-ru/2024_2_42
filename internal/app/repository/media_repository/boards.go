@@ -56,19 +56,35 @@ func (mrc *MediaRepositoryController) GetAllBoardsByOwnerID(ownerID uint64) ([]*
 	var boards []*models.Board
 	for rows.Next() {
 		var boardID, ownerID uint64
-		var title, description string
+		var cover, title, description *string
 		var public bool
 		var creationTime, updateTime time.Time
 
-		if err := rows.Scan(&boardID, &ownerID, &title, &description, &public, &creationTime, &updateTime); err != nil {
+		if err := rows.Scan(&boardID, &ownerID, &cover, &title, &description, &public, &creationTime, &updateTime); err != nil {
 			return nil, fmt.Errorf("getAllBoardsByOwnerID rows.Next: %w", err)
+		}
+
+		boardCover := ""
+		if cover != nil {
+			boardCover = *cover
+		}
+
+		boardDescription := ""
+		if description != nil {
+			boardDescription = *description
+		}
+
+		boardTitle := ""
+		if title != nil {
+			boardTitle = *title
 		}
 
 		boards = append(boards, &models.Board{
 			BoardID:      boardID,
 			OwnerID:      ownerID,
-			Name:         title,
-			Description:  description,
+			Cover:        boardCover,
+			Name:         boardTitle,
+			Description:  boardDescription,
 			Public:       public,
 			CreationTime: creationTime,
 			UpdateTime:   updateTime,

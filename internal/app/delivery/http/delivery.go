@@ -4,7 +4,6 @@ import (
 	"mime/multipart"
 	"pinset/internal/app/models"
 	"pinset/internal/app/models/request"
-	"pinset/internal/app/models/response"
 
 	"github.com/sirupsen/logrus"
 )
@@ -16,7 +15,8 @@ type (
 		LogOut(string) error
 		SignUp(user *models.User) (string, error)
 		IsAuthorized(string) (uint64, error)
-		GetUserInfo(*models.User) (response.UserProfileResponse, error)
+		GetUserAvatar(uint64) (string, error)
+		GetUserInfo(*models.User, uint64) (*models.UserProfile, error)
 		UpdateUserInfo(*models.User) error
 	}
 
@@ -41,7 +41,7 @@ type (
 		GetPinBookmarksNumber(pinID uint64) (uint64, error)
 		DeletePinBookmarkByBookmarkID(bookmarkID uint64) error
 
-		GetAllUserBoards(ownerID uint64) ([]*models.Board, error)
+		GetAllUserBoards(ownerID uint64, currUserID uint64) ([]*models.Board, error)
 		GetBoard(boardID uint64) (*models.Board, error)
 		CreateBoard(board *models.Board) error
 		UpdateBoard(board *models.Board) error

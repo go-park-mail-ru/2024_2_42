@@ -4,7 +4,6 @@ import (
 	"io"
 	"pinset/configs"
 	"pinset/internal/app/models"
-	"pinset/internal/app/models/response"
 	"pinset/internal/app/session"
 )
 
@@ -13,10 +12,11 @@ import (
 // Repository interfaces
 type (
 	UserRepository interface {
-		GetLastUserID() (uint64, error)
+		GetUserIDWithEmail(email string) (uint64, error)
 		CreateUser(*models.User) (uint64, error)
 		CheckUserByEmail(*models.User) (bool, error)
-		GetUserInfo(*models.User) (response.UserProfileResponse, error)
+		GetUserAvatar(uint64) (string, error)
+		GetUserInfo(*models.User, uint64) (*models.UserProfile, error)
 		CheckUserCredentials(*models.User) error
 		UpdateUserInfo(*models.User) error
 		UpdateUserPassword(*models.User) error
@@ -68,10 +68,12 @@ type (
 type (
 	UserUsecaseController struct {
 		repo           UserRepository
+		mediaRepo      MediaRepository
 		authParameters configs.AuthParams
 	}
 
 	MediaUsecaseController struct {
-		repo MediaRepository
+		repo     MediaRepository
+		userRepo UserRepository
 	}
 )

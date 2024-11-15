@@ -169,20 +169,21 @@ func (udc *UserDeliveryController) GetUserInfo(w http.ResponseWriter, r *http.Re
 		})
 		return
 	}
-	userInfo, err := udc.Usecase.GetUserInfo(&models.User{UserID: uid})
+
+	currUserID, ok := r.Context().Value(configs.UserIdKey).(uint64)
+	if !ok {
+		currUserID = 0
+	}
+
+	userInfo, err := udc.Usecase.GetUserInfo(&models.User{UserID: uid}, currUserID)
 	if err != nil {
 		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
 			Internal: err,
 		})
 		return
 	}
-	SendUserProfileResponse(w, udc.Logger, response.UserProfileResponse{
-		UserName:    userInfo.UserName,
-		NickName:    userInfo.NickName,
-		Description: userInfo.Description,
-		Gender:      userInfo.Gender,
-		BirthTime:   userInfo.BirthTime,
-	})
+	SendUserProfileResponse(w, udc.Logger, userInfo)
+
 }
 
 func (udc *UserDeliveryController) UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
@@ -212,7 +213,7 @@ func (udc *UserDeliveryController) UpdateUserInfo(w http.ResponseWriter, r *http
 		UserName:    req.UserName,
 		NickName:    req.NickName,
 		Description: req.Description,
-		BirthTime:   req.BirthTime,
+		BirthTime:   &req.BirthTime,
 		Gender:      req.Gender,
 		AvatarUrl:   &req.AvatarUrl,
 	})
@@ -226,5 +227,28 @@ func (udc *UserDeliveryController) UpdateUserInfo(w http.ResponseWriter, r *http
 
 	SendInfoResponse(w, udc.Logger, response.ResponseInfo{
 		Message: successfullUpdateMessage,
+	})
+}
+
+func (udc *UserDeliveryController) GetAvatar(w http.ResponseWriter, r *http.Request) {
+	currUserID, ok := r.Context().Value(configs.UserIdKey).(uint64)
+	if !ok {
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
+			Internal: internal_errors.ErrUserIsNotRegistered,
+		})
+		return
+	}
+
+	userAvatar, err := udc.Usecase.GetUserAvatar(currUserID)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+
+	SendUserAvatarResponse(w, udc.Logger, response.UserAvatar{
+		Message:   "Succes!",
+		AvatarUrl: userAvatar,
 	})
 }

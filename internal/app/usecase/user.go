@@ -6,7 +6,6 @@ import (
 	delivery "pinset/internal/app/delivery/http"
 	"pinset/internal/app/models"
 	"pinset/internal/app/models/request"
-	"pinset/internal/app/models/response"
 	"time"
 
 	internal_errors "pinset/internal/errors"
@@ -46,7 +45,7 @@ func (uuc *UserUsecaseController) LogIn(req request.LoginRequest) (string, error
 		return "", internal_errors.ErrUserAlreadyAuthorized
 	}
 
-	userID, err := uuc.repo.GetLastUserID()
+	userID, err := uuc.repo.GetUserIDWithEmail(req.Email)
 	if err != nil {
 		return "", fmt.Errorf("logIn getLastUserID: %w", err)
 	}
@@ -192,22 +191,41 @@ func (uuc *UserUsecaseController) DeleteProfile(token string, user *models.User)
 	return nil
 }
 
-func (uuc *UserUsecaseController) GetUserInfo(user *models.User) (response.UserProfileResponse, error) {
-	var userProfilelInfo response.UserProfileResponse
-	userProfilelInfo, err := uuc.repo.GetUserInfo(user)
+func (uuc *UserUsecaseController) GetUserAvatar(userID uint64) (string, error) {
+	var userAvatar string
+	userAvatar, err := uuc.repo.GetUserAvatar(userID)
 	if err != nil {
-		return response.UserProfileResponse{}, fmt.Errorf("userProfile GetUserInfo usecase: %w", err)
+		return "", fmt.Errorf("getUserAvatar usecase: %w", err)
 	}
 
-	userProfilelInfo.NumOfUserFollowings, err = uuc.repo.GetFollowingsCount(user.UserID)
+	return userAvatar, nil
+}
+
+func (uuc *UserUsecaseController) GetUserInfo(user *models.User, currUserID uint64) (*models.UserProfile, error) {
+	var userProfile *models.UserProfile
+	userProfile, err := uuc.repo.GetUserInfo(user, currUserID)
+	fmt.Println("getUserInfo userProfile", err)
 	if err != nil {
-		return response.UserProfileResponse{}, fmt.Errorf("userProfile GetFollowingsCount usecase: %w", err)
+		return &models.UserProfile{}, fmt.Errorf("userProfile GetUserInfo usecase: %w", err)
 	}
 
-	userProfilelInfo.NumOfUserSubscriptions, err = uuc.repo.GetSubsriptionsCount(user.UserID)
+	userProfile.FollowingsCount, err = uuc.repo.GetFollowingsCount(user.UserID)
+	fmt.Println("getFollowingsCount", err)
 	if err != nil {
-		return response.UserProfileResponse{}, fmt.Errorf("userProfile GetFollowingsCount usecase: %w", err)
+		return &models.UserProfile{}, fmt.Errorf("userProfile GetFollowingsCount usecase: %w", err)
 	}
 
-	return userProfilelInfo, nil
+	userProfile.SubscriptionsCount, err = uuc.repo.GetSubsriptionsCount(user.UserID)
+	fmt.Println("getSubscriptionsCount", err)
+	if err != nil {
+		return &models.UserProfile{}, fmt.Errorf("userProfile GetFollowingsCount usecase: %w", err)
+	}
+
+	userProfile.UserBoards, err = uuc.mediaRepo.GetAllBoardsByOwnerID(user.UserID)
+	fmt.Println("getAllBoardsByOwnerID", err)
+	if err != nil {
+		return &models.UserProfile{}, fmt.Errorf("userProfile GetAllBoardsByOwnerID usecase: %w", err)
+	}
+
+	return userProfile, nil
 }

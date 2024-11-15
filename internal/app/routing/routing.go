@@ -30,6 +30,7 @@ type (
 		LogOut(w http.ResponseWriter, r *http.Request)
 		SignUp(w http.ResponseWriter, r *http.Request)
 		IsAuthorized(w http.ResponseWriter, r *http.Request)
+		GetAvatar(w http.ResponseWriter, r *http.Request)
 		GetUserInfo(w http.ResponseWriter, r *http.Request)
 		UpdateUserInfo(w http.ResponseWriter, r *http.Request)
 	}
@@ -91,6 +92,7 @@ func InitializeUserLayerRoutings(rh *RoutingHandler, userHandlers UserDelivery) 
 	rh.mux.HandleFunc("/login", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.LogIn)).Methods("POST")
 	rh.mux.HandleFunc("/signup", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.SignUp)).Methods("POST")
 	rh.mux.HandleFunc("/is_authorized", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.IsAuthorized)).Methods("GET")
+	rh.mux.HandleFunc("/get_avatar", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.GetAvatar)).Methods("GET")
 	rh.mux.HandleFunc("/user/{user_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.GetUserInfo)).Methods("GET")
 }
 

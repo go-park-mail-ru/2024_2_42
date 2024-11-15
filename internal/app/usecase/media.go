@@ -108,7 +108,7 @@ func (muc *MediaUsecaseController) DeletePinBookmarkByBookmarkID(bookmarkID uint
 
 //////////////////////// BOARDS //////////////////////////
 
-func (muc *MediaUsecaseController) GetAllUserBoards(ownerID uint64) ([]*models.Board, error) {
+func (muc *MediaUsecaseController) GetAllUserBoards(ownerID uint64, currUserID uint64) ([]*models.Board, error) {
 	return muc.repo.GetAllBoardsByOwnerID(ownerID)
 }
 

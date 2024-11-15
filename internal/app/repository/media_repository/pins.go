@@ -48,7 +48,7 @@ func (mrc *MediaRepositoryController) GetAllPins(userID uint64) ([]*models.Pin, 
 		if err != nil {
 			return nil, fmt.Errorf("getAllPins rows.Next: %w", err)
 		}
-
+		fmt.Println("err in GetAllins", err)
 		authorInfo := &models.UserPin{}
 		authorInfo.UserID = pin.AuthorID
 
