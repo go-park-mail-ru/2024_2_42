@@ -18,7 +18,7 @@ type (
 		CheckUserByEmail(*models.User) (bool, error)
 		GetUserAvatar(uint64) (string, error)
 		GetUserInfo(*models.User, uint64) (*models.UserProfile, error)
-		GetUserInfoPublic(uint64) (response.UserProfileResponse, error)
+		GetUserInfoPublic(uint64) (*response.UserProfileResponse, error)
 		CheckUserCredentials(*models.User) error
 		UpdateUserInfo(*models.User) error
 		UpdateUserPassword(*models.User) error

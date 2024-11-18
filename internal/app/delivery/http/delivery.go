@@ -19,7 +19,7 @@ type (
 		IsAuthorized(string) (uint64, error)
 		GetUserAvatar(uint64) (string, error)
 		GetUserInfo(*models.User, uint64) (*models.UserProfile, error)
-		GetUserInfoPublic(uint64) (response.UserProfileResponse, error)
+		GetUserInfoPublic(uint64) (*response.UserProfileResponse, error)
 		UpdateUserInfo(*models.User) error
 	}
 

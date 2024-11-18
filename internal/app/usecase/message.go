@@ -62,11 +62,11 @@ func (muc *MessageUsecaseController) GetUserChats(userID uint64) ([]*models.Chat
 		}
 		for _, id := range userIDs {
 			if id != userID {
-				companion, err := muc.userRepo.GetUserInfo(id)
+				companion, err := muc.userRepo.GetUserInfoPublic(id)
 				if err != nil {
 					return nil, err
 				}
-				chat.Companion = companion
+				chat.Companion = *companion
 			}
 		}
 		chats = append(chats, chat)

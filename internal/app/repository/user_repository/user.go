@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"pinset/internal/app/models"
+	"pinset/internal/app/models/response"
 	"pinset/internal/app/session"
 	"pinset/internal/app/usecase"
 	internal_errors "pinset/internal/errors"
@@ -98,6 +99,25 @@ func (urc *UserRepositoryController) GetUserInfo(user *models.User, currUserID u
 			return &models.UserProfile{}, internal_errors.ErrUserDoesntExists
 		}
 		return &models.UserProfile{}, fmt.Errorf("psql GetUserByID: %w", err)
+	}
+	return userInfo, nil
+}
+
+func (urc *UserRepositoryController) GetUserInfoPublic(userID uint64) (*response.UserProfileResponse, error) {
+	var userInfo *response.UserProfileResponse = &response.UserProfileResponse{}
+
+	err := urc.db.QueryRow(GetUserInfoByID, userID).Scan(
+		&userInfo.UserName,
+		&userInfo.NickName,
+		&userInfo.Description,
+		&userInfo.BirthTime,
+		&userInfo.Gender,
+		&userInfo.AvatarUrl)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return &response.UserProfileResponse{}, internal_errors.ErrUserDoesntExists
+		}
+		return &response.UserProfileResponse{}, fmt.Errorf("psql GetUserByID: %w", err)
 	}
 	return userInfo, nil
 }

@@ -6,6 +6,7 @@ import (
 	delivery "pinset/internal/app/delivery/http"
 	"pinset/internal/app/models"
 	"pinset/internal/app/models/request"
+	"pinset/internal/app/models/response"
 	"time"
 
 	internal_errors "pinset/internal/errors"
@@ -227,4 +228,8 @@ func (uuc *UserUsecaseController) GetUserInfo(user *models.User, currUserID uint
 	userProfile.UserBoards = UserBoards
 
 	return userProfile, nil
+}
+
+func (uuc *UserUsecaseController) GetUserInfoPublic(userID uint64) (*response.UserProfileResponse, error) {
+	return uuc.repo.GetUserInfoPublic(userID)
 }
