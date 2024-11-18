@@ -17,7 +17,7 @@ type (
 		LogOut(string) error
 		SignUp(user *models.User) error
 		IsAuthorized(string) (uint64, error)
-		GetUserInfo(*models.User) (response.UserProfileResponse, error)
+		GetUserInfo(uint64) (response.UserProfileResponse, error)
 		UpdateUserInfo(string, *models.User) error
 	}
 
@@ -54,10 +54,12 @@ type (
 		IsOnlineUser(userID uint64) bool
 		GetOnlineUser(userID uint64) *models.ChatUser
 		DeleteOnlineUser(userID uint64)
+		NumUsersOnline() int
 
 		GetChatMessages(chatID uint64) ([]*models.MessageInfo, error)
 		AddChatMessage(message *models.Message) (*models.MessageCreateInfo, error)
 		GetChatUsers(chatID uint64) ([]uint64, error)
+		GetUserChats(userID uint64) ([]*models.ChatInfo, error)
 	}
 )
 

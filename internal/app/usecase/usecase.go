@@ -16,7 +16,7 @@ type (
 		GetLastUserID() (uint64, error)
 		CreateUser(*models.User) error
 		CheckUserByEmail(*models.User) (bool, error)
-		GetUserInfo(*models.User) (response.UserProfileResponse, error)
+		GetUserInfo(uint64) (response.UserProfileResponse, error)
 		CheckUserCredentials(*models.User) error
 		UpdateUserInfo(*models.User) error
 		UpdateUserPassword(*models.User) error
@@ -65,6 +65,7 @@ type (
 		CreateChat() (*models.ChatCreateInfo, error)
 		AddUserToChat(chatID uint64, userID uint64) error
 		GetChatUsers(chatID uint64) ([]uint64, error)
+		GetUserChats(userID uint64) ([]uint64, error)
 		DeleteChat(chatID uint64) error
 
 		CreateMessage(msg *models.Message) (*models.MessageCreateInfo, error)
@@ -78,6 +79,7 @@ type (
 		GetOnlineUser(userID uint64) *models.ChatUser
 		AddOnlineUser(user *models.ChatUser)
 		DeleteOnlineUser(userID uint64)
+		NumUsersOnline() int
 	}
 )
 
@@ -95,5 +97,6 @@ type (
 	MessageUsecaseController struct {
 		mediaRepo      MediaRepository
 		userOnlineRepo UserOnlineRepo
+		userRepo       UserRepository
 	}
 )

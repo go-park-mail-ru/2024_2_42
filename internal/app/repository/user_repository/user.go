@@ -83,10 +83,10 @@ func (urc *UserRepositoryController) CheckUserCredentials(user *models.User) err
 	return nil
 }
 
-func (urc *UserRepositoryController) GetUserInfo(user *models.User) (response.UserProfileResponse, error) {
+func (urc *UserRepositoryController) GetUserInfo(userID uint64) (response.UserProfileResponse, error) {
 	var userInfo response.UserProfileResponse
 
-	err := urc.db.QueryRow(GetUserInfoByID, user.UserID).Scan(&userInfo.UserName, &userInfo.NickName, &userInfo.Description, &userInfo.BirthTime, &userInfo.Gender, &userInfo.AvatarUrl)
+	err := urc.db.QueryRow(GetUserInfoByID, userID).Scan(&userInfo.UserName, &userInfo.NickName, &userInfo.Description, &userInfo.BirthTime, &userInfo.Gender, &userInfo.AvatarUrl)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return response.UserProfileResponse{}, internal_errors.ErrUserDoesntExists

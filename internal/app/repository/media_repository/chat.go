@@ -51,6 +51,29 @@ func (mrc *MediaRepositoryController) GetChatUsers(chatID uint64) ([]uint64, err
 	return userIDs, nil
 }
 
+func (mrc *MediaRepositoryController) GetUserChats(userID uint64) ([]uint64, error) {
+	rows, err := mrc.db.Query(`SELECT chat_id FROM user_chat WHERE user_id=$1`, userID)
+
+	if err != nil {
+		return nil, fmt.Errorf("psql GetUserChats %w", err)
+	}
+	defer rows.Close()
+
+	chatIDs := make([]uint64, 0)
+	for rows.Next() {
+		var chatID uint64
+		if err := rows.Scan(&chatID); err != nil {
+			return nil, fmt.Errorf("psql GetUserChats rows.Next: %w", err)
+		}
+		chatIDs = append(chatIDs, chatID)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetUserChats rows.Err: %w", err)
+	}
+	fmt.Println("repository chat IDs", chatIDs)
+	return chatIDs, nil
+}
+
 func (mrc *MediaRepositoryController) DeleteChat(chatID uint64) error {
 	_, err := mrc.db.Exec(`DELETE FROM chat WHERE chat_id=$1`, chatID)
 

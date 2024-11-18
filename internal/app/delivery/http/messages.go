@@ -2,14 +2,19 @@ package delivery
 
 import (
 	"encoding/json"
-	"errors"
-	"net"
+	"fmt"
 	"net/http"
+	"pinset/configs"
 	"pinset/internal/app/models"
 	internal_errors "pinset/internal/errors"
+	"strconv"
+	"time"
+
+	"github.com/gorilla/mux"
 )
 
 func (mdc *MessageDelieveryController) HandShake(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("handshake started")
 	conn, err := mdc.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
@@ -18,35 +23,60 @@ func (mdc *MessageDelieveryController) HandShake(w http.ResponseWriter, r *http.
 		return
 	}
 
-	var chatJoiner models.ChatJoiner
-	err = conn.ReadJSON(&chatJoiner)
-	if err != nil {
+	userID, ok := r.Context().Value(configs.UserIdKey).(uint64)
+	if !ok {
 		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
-			General: err, Internal: internal_errors.ErrBadRequest,
+			General: internal_errors.ErrUserIsNotAuthorized, Internal: internal_errors.ErrUserIsNotAuthorized,
 		})
-		return
 	}
 
-	newChatUser := &models.ChatUser{ID: chatJoiner.ID, ChatID: chatJoiner.ChatID, Connection: conn}
+	fmt.Println("last ID connected ", userID)
+	fmt.Println("num users online ", mdc.Usecase.NumUsersOnline())
+
+	newChatUser := &models.ChatUser{ID: userID, Connection: conn}
 
 	mdc.Usecase.AddOnlineUser(newChatUser)
 
 	go mdc.HandleConn(newChatUser)
 }
 
-func (mdc *MessageDelieveryController) GetAllChatMessages(w http.ResponseWriter, r *http.Request) {
-
-	var user models.ChatJoiner
-
-	err := json.NewDecoder(r.Body).Decode(&user)
+func (mdc *MessageDelieveryController) GetUserChats(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(configs.UserIdKey).(uint64)
+	if !ok {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			General: internal_errors.ErrUserIsNotAuthorized, Internal: internal_errors.ErrUserIsNotAuthorized,
+		})
+	}
+	chats, err := mdc.Usecase.GetUserChats(userID)
+	fmt.Println(chats)
 	if err != nil {
 		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
-			General: err, Internal: internal_errors.ErrBadRequest,
+			General: err, Internal: internal_errors.ErrInternalServerError,
+		})
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(chats); err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInternalServerError,
 		})
 		return
 	}
 
-	messages, err := mdc.Usecase.GetChatMessages(user.ChatID)
+}
+
+func (mdc *MessageDelieveryController) GetAllChatMessages(w http.ResponseWriter, r *http.Request) {
+
+	chatIDStr := mux.Vars(r)["chat_id"]
+	chatID, err := strconv.ParseUint(chatIDStr, 10, 64)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+
+	messages, err := mdc.Usecase.GetChatMessages(chatID)
 	if err != nil {
 		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
 			General: err, Internal: internal_errors.ErrInternalServerError,
@@ -70,14 +100,19 @@ func (mdc *MessageDelieveryController) HandleConn(user *models.ChatUser) {
 	for {
 		var mes models.Message
 		err := user.Connection.ReadJSON(&mes)
+		mes.SenderID = user.ID
+		mes.CreatedAt = time.Now()
+		fmt.Println(mes)
 
 		if err != nil {
 			mdc.Logger.Printf("failed to read message %v", err)
-			if errors.Is(err, net.ErrClosed) {
-				return
-			}
-			user.Connection.WriteJSON(models.WebSocketResponse{Type: "error", Data: "websocket message bad request"})
-			continue
+			return
+			// if errors.Is(err, net.ErrClosed) {
+			// 	mdc.Logger.Printf("going away %v", err)
+			// 	return
+			// }
+			// user.Connection.WriteJSON(models.WebSocketResponse{Type: "error", Data: "websocket message bad request"})
+			// continue
 		}
 
 		messageInfo, err := mdc.Usecase.AddChatMessage(&mes)
@@ -95,6 +130,7 @@ func (mdc *MessageDelieveryController) HandleConn(user *models.ChatUser) {
 			continue
 		}
 
+		fmt.Println("messageInfo", messageInfo)
 		for _, reseiverID := range chatUserIDs {
 			if mdc.Usecase.IsOnlineUser(reseiverID) {
 				reseiver := mdc.Usecase.GetOnlineUser(reseiverID)

@@ -1,13 +1,15 @@
 package usecase
 
 import (
+	"fmt"
 	delivery "pinset/internal/app/delivery/http"
 	"pinset/internal/app/models"
 )
 
-func NewMessageUsecase(userOnlineRepo UserOnlineRepo, mediaRepo MediaRepository) delivery.MessageUsecase {
+func NewMessageUsecase(userOnlineRepo UserOnlineRepo, mediaRepo MediaRepository, userRepo UserRepository) delivery.MessageUsecase {
 	return &MessageUsecaseController{
 		mediaRepo:      mediaRepo,
+		userRepo:       userRepo,
 		userOnlineRepo: userOnlineRepo,
 	}
 }
@@ -18,6 +20,10 @@ func (muc *MessageUsecaseController) AddOnlineUser(user *models.ChatUser) {
 
 func (muc *MessageUsecaseController) IsOnlineUser(userID uint64) bool {
 	return muc.userOnlineRepo.IsOnlineUser(userID)
+}
+
+func (muc *MessageUsecaseController) NumUsersOnline() int {
+	return muc.userOnlineRepo.NumUsersOnline()
 }
 
 func (muc *MessageUsecaseController) GetOnlineUser(userID uint64) *models.ChatUser {
@@ -37,4 +43,34 @@ func (muc *MessageUsecaseController) AddChatMessage(message *models.Message) (*m
 }
 func (muc *MessageUsecaseController) GetChatUsers(chatID uint64) ([]uint64, error) {
 	return muc.mediaRepo.GetChatUsers(chatID)
+}
+
+func (muc *MessageUsecaseController) GetUserChats(userID uint64) ([]*models.ChatInfo, error) {
+	chatIDs, err := muc.mediaRepo.GetUserChats(userID)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("user ID usecase", userID)
+	fmt.Println(chatIDs)
+	chats := make([]*models.ChatInfo, 0)
+	for _, chatID := range chatIDs {
+		chat := &models.ChatInfo{ChatID: chatID}
+		userIDs, err := muc.mediaRepo.GetChatUsers(chatID)
+		fmt.Println("chat users", userIDs)
+		if err != nil {
+			return nil, err
+		}
+		for _, id := range userIDs {
+			if id != userID {
+				companion, err := muc.userRepo.GetUserInfo(id)
+				if err != nil {
+					return nil, err
+				}
+				chat.Companion = companion
+			}
+		}
+		chats = append(chats, chat)
+	}
+	fmt.Println("user chats", chats)
+	return chats, nil
 }

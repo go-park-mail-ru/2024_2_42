@@ -2,6 +2,7 @@ package UserOnlineRepository
 
 import (
 	"pinset/internal/app/models"
+	"pinset/internal/app/usecase"
 	"sync"
 )
 
@@ -10,7 +11,7 @@ type UserOnlineRepositoryController struct {
 	data map[uint64]*models.ChatUser
 }
 
-func NewUserOnlineRepository() *UserOnlineRepositoryController {
+func NewUserOnlineRepository() usecase.UserOnlineRepo {
 	return &UserOnlineRepositoryController{
 		mu:   &sync.RWMutex{},
 		data: make(map[uint64]*models.ChatUser),
@@ -34,6 +35,12 @@ func (uoc *UserOnlineRepositoryController) AddOnlineUser(user *models.ChatUser) 
 	uoc.mu.Lock()
 	defer uoc.mu.Unlock()
 	uoc.data[user.ID] = user
+}
+
+func (uoc *UserOnlineRepositoryController) NumUsersOnline() int {
+	uoc.mu.RLock()
+	defer uoc.mu.RUnlock()
+	return len(uoc.data)
 }
 
 func (uoc *UserOnlineRepositoryController) DeleteOnlineUser(userID uint64) {

@@ -6,16 +6,17 @@ import (
 )
 
 func (mrc *MediaRepositoryController) CreateMessage(msg *models.Message) (*models.MessageCreateInfo, error) {
-	var messageID uint64
+	crMsg := &models.MessageCreateInfo{}
 	err := mrc.db.QueryRow(`INSERT INTO msg (author_id, chat_id, content, created_at) VALUES ($1, $2, $3, $4) 
-	RETURNING message_id`, msg.SenderID, msg.ChatID, msg.Content, msg.CreatedAt).Scan(&messageID)
+	RETURNING message_id, author_id, chat_id, content, created_at`,
+		msg.SenderID, msg.ChatID, msg.Content, msg.CreatedAt).Scan(&crMsg.ID, &crMsg.SenderID, &crMsg.ChatID, &crMsg.Content, &crMsg.CreatedAt)
 
 	if err != nil {
 		return nil, fmt.Errorf("psql CreateMessage: %w", err)
 	}
 
-	mrc.logger.WithField("message was succesfully created with messageID", messageID).Info("createMessage func")
-	return &models.MessageCreateInfo{ID: messageID}, nil
+	mrc.logger.WithField("message was succesfully created with messageID", crMsg.ID).Info("createMessage func")
+	return crMsg, nil
 }
 
 func (mrc *MediaRepositoryController) DeleteMessage(messageID uint64) error {

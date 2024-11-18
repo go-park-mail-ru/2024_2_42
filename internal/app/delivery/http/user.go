@@ -157,7 +157,7 @@ func (udc *UserDeliveryController) GetUserInfo(w http.ResponseWriter, r *http.Re
 		})
 		return
 	}
-	userInfo, err := udc.Usecase.GetUserInfo(&models.User{UserID: uid})
+	userInfo, err := udc.Usecase.GetUserInfo(uid)
 	if err != nil {
 		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
 			Internal: err,

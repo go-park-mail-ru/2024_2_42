@@ -62,6 +62,7 @@ type (
 	MessageDelivery interface {
 		HandShake(w http.ResponseWriter, r *http.Request)
 		GetAllChatMessages(w http.ResponseWriter, r *http.Request)
+		GetUserChats(w http.ResponseWriter, r *http.Request)
 	}
 )
 
@@ -152,7 +153,9 @@ func NewMessageDelivery(logger *logrus.Logger, usecase delivery.MessageUsecase) 
 
 func InitializeMessageLayerRoutings(rh *RoutingHandler, messageHandlers MessageDelivery) {
 	rh.mux.HandleFunc("/handshake", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, messageHandlers.HandShake)).Methods("GET")
-	rh.mux.HandleFunc("/chat/messages", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, messageHandlers.GetAllChatMessages)).Methods("GET")
+	rh.mux.HandleFunc("/chat/{chat_id}/messages", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, messageHandlers.GetAllChatMessages)).Methods("GET")
+	rh.mux.HandleFunc("/mychats", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, messageHandlers.GetUserChats)).Methods("GET")
+
 }
 
 func Route() {
@@ -179,7 +182,7 @@ func Route() {
 	mediaDelivery := NewMediaDelivery(logger, mediaUsecase)
 
 	userOnlineRepo := UserOnlineRepository.NewUserOnlineRepository()
-	messageUsecase := usecase.NewMessageUsecase(userOnlineRepo, mediaRepo)
+	messageUsecase := usecase.NewMessageUsecase(userOnlineRepo, mediaRepo, userRepo)
 	messageDelivery := NewMessageDelivery(logger, messageUsecase)
 
 	rh := NewRoutingHandler(logger, mux, userUsecase)

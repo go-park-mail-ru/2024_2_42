@@ -187,19 +187,19 @@ func (uuc *UserUsecaseController) DeleteProfile(token string, user *models.User)
 	return nil
 }
 
-func (uuc *UserUsecaseController) GetUserInfo(user *models.User) (response.UserProfileResponse, error) {
+func (uuc *UserUsecaseController) GetUserInfo(userID uint64) (response.UserProfileResponse, error) {
 	var userProfilelInfo response.UserProfileResponse
-	userProfilelInfo, err := uuc.repo.GetUserInfo(user)
+	userProfilelInfo, err := uuc.repo.GetUserInfo(userID)
 	if err != nil {
 		return response.UserProfileResponse{}, fmt.Errorf("userProfile GetUserInfo usecase: %w", err)
 	}
 
-	userProfilelInfo.NumOfUserFollowings, err = uuc.repo.GetFollowingsCount(user.UserID)
+	userProfilelInfo.NumOfUserFollowings, err = uuc.repo.GetFollowingsCount(userID)
 	if err != nil {
 		return response.UserProfileResponse{}, fmt.Errorf("userProfile GetFollowingsCount usecase: %w", err)
 	}
 
-	userProfilelInfo.NumOfUserSubscriptions, err = uuc.repo.GetSubsriptionsCount(user.UserID)
+	userProfilelInfo.NumOfUserSubscriptions, err = uuc.repo.GetSubsriptionsCount(userID)
 	if err != nil {
 		return response.UserProfileResponse{}, fmt.Errorf("userProfile GetFollowingsCount usecase: %w", err)
 	}
