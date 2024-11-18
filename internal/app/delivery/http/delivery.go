@@ -15,10 +15,12 @@ type (
 	UserUsecase interface {
 		LogIn(request.LoginRequest) (string, error)
 		LogOut(string) error
-		SignUp(user *models.User) error
+		SignUp(user *models.User) (string, error)
 		IsAuthorized(string) (uint64, error)
-		GetUserInfo(uint64) (response.UserProfileResponse, error)
-		UpdateUserInfo(string, *models.User) error
+		GetUserAvatar(uint64) (string, error)
+		GetUserInfo(*models.User, uint64) (*models.UserProfile, error)
+		GetUserInfoPublic(uint64) (response.UserProfileResponse, error)
+		UpdateUserInfo(*models.User) error
 	}
 
 	MediaUsecase interface {
@@ -42,7 +44,7 @@ type (
 		GetPinBookmarksNumber(pinID uint64) (uint64, error)
 		DeletePinBookmarkByBookmarkID(bookmarkID uint64) error
 
-		GetAllUserBoards(ownerID uint64) ([]*models.Board, error)
+		GetAllUserBoards(ownerID uint64, currUserID uint64) ([]*models.Board, error)
 		GetBoard(boardID uint64) (*models.Board, error)
 		CreateBoard(board *models.Board) error
 		UpdateBoard(board *models.Board) error

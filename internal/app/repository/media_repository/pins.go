@@ -12,7 +12,7 @@ import (
 )
 
 func (mrc *MediaRepositoryController) CreatePin(pin *models.Pin) error {
-	err := mrc.db.QueryRow(CreatePin, pin.AuthorID, pin.Title, pin.Description, pin.BoardID, pin.MediaUrl, pin.RelatedLink).Scan(&pin.PinID)
+	err := mrc.db.QueryRow(CreatePin, pin.AuthorID, pin.Title, pin.Description, pin.MediaUrl, pin.RelatedLink).Scan(&pin.PinID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			pin.PinID = 0
@@ -48,14 +48,15 @@ func (mrc *MediaRepositoryController) GetAllPins(userID uint64) ([]*models.Pin, 
 		if err != nil {
 			return nil, fmt.Errorf("getAllPins rows.Next: %w", err)
 		}
-
 		authorInfo := &models.UserPin{}
 		authorInfo.UserID = pin.AuthorID
 
 		err = mrc.db.QueryRow(GetUserInfoForPin, &pin.AuthorID).
 			Scan(&authorInfo.NickName, &authorInfo.AvatarUrl)
 		if err != nil {
-			return nil, fmt.Errorf("getAllPins GetUserInfoForPin: %w", err)
+			if !errors.Is(err, sql.ErrNoRows) {
+				return nil, fmt.Errorf("getAllPins GetUserInfoForPin: %w", err)
+			}
 		}
 
 		err = mrc.db.QueryRow(userRepository.GetFollowingsCount, &pin.AuthorID).
@@ -67,6 +68,9 @@ func (mrc *MediaRepositoryController) GetAllPins(userID uint64) ([]*models.Pin, 
 		if userID != uint64(0) {
 			var availableBoards []*models.Board
 			availableBoards, err = mrc.GetAllBoardsByOwnerID(userID)
+			if err != nil {
+				return nil, fmt.Errorf("getAllPins GetAllBoardsByOwnerID: %w", err)
+			}
 			pin.Boards = availableBoards
 		}
 

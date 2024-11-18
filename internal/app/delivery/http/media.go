@@ -82,7 +82,6 @@ func (mdc *MediaDeliveryController) Feed(w http.ResponseWriter, r *http.Request)
 	}
 	feed, err := mdc.Usecase.Feed(userID)
 	if err != nil {
-		fmt.Println("feed error", err)
 		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
 			General: err, Internal: internal_errors.ErrInternalServerError,
 		})
@@ -123,7 +122,8 @@ func (mdc *MediaDeliveryController) CreatePin(w http.ResponseWriter, r *http.Req
 		}
 
 		pin.Sanitize()
-		pin.MediaUrl = lastUploadedMediaUrl
+		// pin.MediaUrl = lastUploadedMediaUrl
+		// pin.RelatedLink = lastUploadedMediaUrl
 
 		mdc.Logger.WithFields(logrus.Fields{
 			"media_url": lastUploadedMediaUrl,
@@ -191,9 +191,9 @@ func (mdc *MediaDeliveryController) GetPinPreview(w http.ResponseWriter, r *http
 
 	SendPinPreviewResponse(w, mdc.Logger, response.PinPreviewResponse{
 		AuthorName:            author.UserName,
-		AuthorAvatarUrl:       author.AvatarUrl,
+		AuthorAvatarUrl:       *author.AvatarUrl,
 		AuthorFollowersNumber: 0,
-		MediaUrl:              pin.MediaUrl,
+		MediaUrl:              *pin.MediaUrl,
 		ViewsNumber:           pin.Views,
 		BookmarksNumber:       bookmarksNumber,
 	})
@@ -235,12 +235,12 @@ func (mdc *MediaDeliveryController) GetPinPage(w http.ResponseWriter, r *http.Re
 
 	SendPinPageResponse(w, mdc.Logger, response.PinPageResponse{
 		AuthorName:            author.UserName,
-		AuthorAvatarUrl:       author.AvatarUrl,
+		AuthorAvatarUrl:       *author.AvatarUrl,
 		AuthorFollowersNumber: 0,
-		MediaUrl:              pin.MediaUrl,
-		Title:                 pin.Title,
-		Description:           pin.Description,
-		RelatedLink:           pin.RelatedLink,
+		MediaUrl:              *pin.MediaUrl,
+		Title:                 *pin.Title,
+		Description:           *pin.Description,
+		RelatedLink:           *pin.RelatedLink,
 		Geolocation:           pin.Geolocation,
 		CreationTime:          pin.CreationTime,
 	})
@@ -336,12 +336,12 @@ func (mdc *MediaDeliveryController) UpdatePin(w http.ResponseWriter, r *http.Req
 
 		err = mdc.Usecase.UpdatePinInfo(&models.Pin{
 			PinID:       req.PinID,
-			Title:       req.Title,
-			Description: req.Description,
-			RelatedLink: req.RelatedLink,
+			Title:       &req.Title,
+			Description: &req.Description,
+			RelatedLink: &req.RelatedLink,
 			BoardID:     req.BoardID,
 			Geolocation: req.Geolocation,
-			MediaUrl:    lastUploadedMediaUrl,
+			MediaUrl:    &lastUploadedMediaUrl,
 		})
 
 		if err != nil {
@@ -470,7 +470,12 @@ func (mdc *MediaDeliveryController) GetUserBoards(w http.ResponseWriter, r *http
 		return
 	}
 
-	boards, err := mdc.Usecase.GetAllUserBoards(userID)
+	currUserID, ok := r.Context().Value(configs.UserIdKey).(uint64)
+	if !ok {
+		currUserID = 0
+	}
+
+	boards, err := mdc.Usecase.GetAllUserBoards(userID, currUserID)
 	if err != nil {
 		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
 			Internal: err,

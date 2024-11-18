@@ -32,6 +32,7 @@ type (
 		LogOut(w http.ResponseWriter, r *http.Request)
 		SignUp(w http.ResponseWriter, r *http.Request)
 		IsAuthorized(w http.ResponseWriter, r *http.Request)
+		GetAvatar(w http.ResponseWriter, r *http.Request)
 		GetUserInfo(w http.ResponseWriter, r *http.Request)
 		UpdateUserInfo(w http.ResponseWriter, r *http.Request)
 	}
@@ -99,6 +100,7 @@ func InitializeUserLayerRoutings(rh *RoutingHandler, userHandlers UserDelivery) 
 	rh.mux.HandleFunc("/login", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.LogIn)).Methods("POST")
 	rh.mux.HandleFunc("/signup", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.SignUp)).Methods("POST")
 	rh.mux.HandleFunc("/is_authorized", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.IsAuthorized)).Methods("GET")
+	rh.mux.HandleFunc("/get_avatar", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.GetAvatar)).Methods("GET")
 	rh.mux.HandleFunc("/user/{user_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.GetUserInfo)).Methods("GET")
 }
 
@@ -115,7 +117,7 @@ func InitializeMediaLayerRoutings(rh *RoutingHandler, mediaHandlers MediaDeliver
 
 	rh.mux.HandleFunc("/feed", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.Feed)).Methods("GET")
 
-	rh.mux.HandleFunc("/create-pin", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.CreatePin)).Methods("POST")
+	rh.mux.HandleFunc("/create-pin", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.CreatePin)).Methods("POST")
 	rh.mux.HandleFunc("/pins/preview/{pin_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetPinPreview)).Methods("GET")
 	rh.mux.HandleFunc("/pins/page/{pin_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetPinPage)).Methods("GET")
 	rh.mux.HandleFunc("/pins/update/{pin_id}", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.UpdatePin)).Methods("PUT")
@@ -168,15 +170,14 @@ func Route() {
 	mux := mux.NewRouter()
 
 	repo := db.InitDB(logger)
-
-	userRepo := userRepository.NewUserRepository(repo, logger)
-	userUsecase := usecase.NewUserUsecase(userRepo)
-	userDelivery := NewUserDelivery(logger, userUsecase)
-
 	mediaRepo, mediaErr := mediarepository.NewMediaRepository(repo, logger)
 	if mediaErr != nil {
 		logger.Fatal(mediaErr)
 	}
+
+	userRepo := userRepository.NewUserRepository(repo, logger)
+	userUsecase := usecase.NewUserUsecase(userRepo, mediaRepo)
+	userDelivery := NewUserDelivery(logger, userUsecase)
 
 	mediaUsecase := usecase.NewMediaUsecase(mediaRepo)
 	mediaDelivery := NewMediaDelivery(logger, mediaUsecase)

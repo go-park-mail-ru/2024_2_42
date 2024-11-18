@@ -4,12 +4,14 @@ package mediarepository
 const (
 	GetUserInfoForPin = `SELECT nick_name, avatar_url FROM "user" WHERE user_id = $1`
 
-	CreatePin = `INSERT INTO pin (author_id, title, description, board_id, media_url, related_link) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING RETURNING pin_id;`
+	CreatePin = `INSERT INTO pin (author_id, title, description, media_url, related_link) VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING RETURNING pin_id;`
 
+	AddPinToBoard            = `INSERT INTO saved_pin_to_board (board_id, pin_id) WITH VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING pin_id;`
 	GetAllPins               = `SELECT pin_id, author_id, media_url, title, description FROM pin;`
 	GetPinPreviewInfoByPinID = `SELECT pin_id, author_id, media_url, views FROM pin WHERE pin_id = $1;`
 	GetPinPageInfoByPinID    = `SELECT pin_id, author_id, title, description, related_link, geolocation, creation_time FROM pin WHERE pin_id = $1;`
 	GetPinAuthorByUserID     = `SELECT user_name, avatar_url FROM "user" WHERE user_id = $1`
+	GetPinsIDByBoardID       = `SELECT pin_id FORM saved_pin_to_board WHERE board_id = $1;`
 
 	UpdatePinInfoByPinID       = `UPDATE pin SET title = $1, description = $2, board_id = $3, media_url = $4, related_link = $5, geolocation = $6 WHERE pin_id = $7`
 	UpdatePinViewsByPinID      = `UPDATE pin SET views = views + 1 WHERE pin_id = $1;`
@@ -33,7 +35,4 @@ const (
 	CreateBoard          = `INSERT INTO board (owner_id, name, description, public) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING board_id;`
 	UpdateBoardByBoardID = `UPDATE board SET name = $1, description = $2, public = $3 RETURNING board_id;`
 	DeleteBoardByBoardID = `DELETE FROM board WHERE board_id = $1`
-
-	AddPinToBoard         = `INSERT INTO saved_pin_to_board (board_id, pin_id) VALUES ($1, $2) RETURNING board_id`
-	GetBoardPinsByBoardID = `SELECT pin_id FROM saved_pin_to_board WHERE board_id = $1`
 )

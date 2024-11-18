@@ -6,7 +6,6 @@ import (
 	delivery "pinset/internal/app/delivery/http"
 	"pinset/internal/app/models"
 	"pinset/internal/app/models/request"
-	"pinset/internal/app/models/response"
 	"time"
 
 	internal_errors "pinset/internal/errors"
@@ -14,9 +13,10 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-func NewUserUsecase(repo UserRepository) delivery.UserUsecase {
+func NewUserUsecase(repo UserRepository, mediaRepo MediaRepository) delivery.UserUsecase {
 	return &UserUsecaseController{
 		repo:           repo,
+		mediaRepo:      mediaRepo,
 		authParameters: configs.NewAuthParams(),
 	}
 }
@@ -46,7 +46,7 @@ func (uuc *UserUsecaseController) LogIn(req request.LoginRequest) (string, error
 		return "", internal_errors.ErrUserAlreadyAuthorized
 	}
 
-	userID, err := uuc.repo.GetLastUserID()
+	userID, err := uuc.repo.GetUserIDWithEmail(req.Email)
 	if err != nil {
 		return "", fmt.Errorf("logIn getLastUserID: %w", err)
 	}
@@ -78,28 +78,41 @@ func (uuc *UserUsecaseController) LogOut(token string) error {
 	return nil
 }
 
-func (uuc *UserUsecaseController) SignUp(user *models.User) error {
+func (uuc *UserUsecaseController) SignUp(user *models.User) (string, error) {
 	// Incorrect data given
 	if err := user.Valid(); err != nil {
-		return internal_errors.ErrUserDataInvalid
+		return "", internal_errors.ErrUserDataInvalid
 	}
 
 	// User already registered
 	isUserExists, err := uuc.repo.CheckUserByEmail(user)
 	if err != nil {
-		return fmt.Errorf("signUp after UserAlreadySignedUp: %w", err)
+		return "", fmt.Errorf("signUp after UserAlreadySignedUp: %w", err)
 	}
 
 	if isUserExists {
-		return internal_errors.ErrUserAlreadyExists
+		return "", internal_errors.ErrUserAlreadyExists
 	}
 
-	err = uuc.repo.CreateUser(user)
+	userID, err := uuc.repo.CreateUser(user)
 	if err != nil {
-		return fmt.Errorf("signUp after Insert: %w", err)
+		return "", fmt.Errorf("signUp after CreateUser: %w", err)
 	}
 
-	return nil
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": userID,
+		"login":   user.Email,
+		"exp":     time.Now().Add(uuc.authParameters.SessionTokenExpirationTime).Unix(),
+	})
+
+	signedToken, err := token.SignedString(uuc.authParameters.JwtSecret)
+	if err != nil {
+		return "", internal_errors.ErrCantSignSessionToken
+	}
+
+	uuc.repo.Session().Create(signedToken, userID)
+
+	return signedToken, nil
 }
 
 func (uuc *UserUsecaseController) IsAuthorized(token string) (uint64, error) {
@@ -111,35 +124,27 @@ func (uuc *UserUsecaseController) IsAuthorized(token string) (uint64, error) {
 	}
 
 	if !jwtToken.Valid {
-		fmt.Println("isAuthorized invalid session token", err)
 		return 0, internal_errors.ErrInvalidSessionToken
 	}
 
 	if !uuc.repo.UserHasActiveSession(token) {
-		fmt.Println("isAuthorized UserHasActiveSession", err)
 		return 0, internal_errors.ErrUserIsNotAuthorized
 	}
 
 	if claims, ok := jwtToken.Claims.(jwt.MapClaims); ok {
-		fmt.Println("jwtTokenClaims userID", uint64(claims["user_id"].(float64)))
 		return uint64(claims["user_id"].(float64)), nil
 	}
 
 	return 0, internal_errors.ErrBadRequest
 }
 
-func (uuc *UserUsecaseController) UpdateUserInfo(token string, user *models.User) error {
-	userID, err := uuc.IsAuthorized(token)
+func (uuc *UserUsecaseController) UpdateUserInfo(user *models.User) error {
 
-	if err != nil {
-		return fmt.Errorf("updateUserPasswordByID isAuthorized: %w", err)
-	}
-
-	if userID != user.UserID {
+	if user.UserID != 0 {
 		return internal_errors.ErrBadUserID
 	}
 
-	err = uuc.repo.UpdateUserInfo(user)
+	err := uuc.repo.UpdateUserInfo(user)
 	if err != nil {
 		return fmt.Errorf("getUserInfoByID usecase: %w", err)
 	}
@@ -187,22 +192,39 @@ func (uuc *UserUsecaseController) DeleteProfile(token string, user *models.User)
 	return nil
 }
 
-func (uuc *UserUsecaseController) GetUserInfo(userID uint64) (response.UserProfileResponse, error) {
-	var userProfilelInfo response.UserProfileResponse
-	userProfilelInfo, err := uuc.repo.GetUserInfo(userID)
+func (uuc *UserUsecaseController) GetUserAvatar(userID uint64) (string, error) {
+	var userAvatar string
+	userAvatar, err := uuc.repo.GetUserAvatar(userID)
 	if err != nil {
-		return response.UserProfileResponse{}, fmt.Errorf("userProfile GetUserInfo usecase: %w", err)
+		return "", fmt.Errorf("getUserAvatar usecase: %w", err)
 	}
 
-	userProfilelInfo.NumOfUserFollowings, err = uuc.repo.GetFollowingsCount(userID)
+	return userAvatar, nil
+}
+
+func (uuc *UserUsecaseController) GetUserInfo(user *models.User, currUserID uint64) (*models.UserProfile, error) {
+	var userProfile *models.UserProfile = &models.UserProfile{}
+	var err error
+	userProfile, err = uuc.repo.GetUserInfo(user, currUserID)
 	if err != nil {
-		return response.UserProfileResponse{}, fmt.Errorf("userProfile GetFollowingsCount usecase: %w", err)
+		return &models.UserProfile{}, fmt.Errorf("userProfile GetUserInfo usecase: %w", err)
 	}
 
-	userProfilelInfo.NumOfUserSubscriptions, err = uuc.repo.GetSubsriptionsCount(userID)
+	userProfile.FollowingsCount, err = uuc.repo.GetFollowingsCount(user.UserID)
 	if err != nil {
-		return response.UserProfileResponse{}, fmt.Errorf("userProfile GetFollowingsCount usecase: %w", err)
+		return &models.UserProfile{}, fmt.Errorf("userProfile GetFollowingsCount usecase: %w", err)
 	}
 
-	return userProfilelInfo, nil
+	userProfile.SubscriptionsCount, err = uuc.repo.GetSubsriptionsCount(user.UserID)
+	if err != nil {
+		return &models.UserProfile{}, fmt.Errorf("userProfile GetFollowingsCount usecase: %w", err)
+	}
+	var UserBoards []*models.Board
+	UserBoards, err = uuc.mediaRepo.GetAllBoardsByOwnerID(user.UserID)
+	if err != nil {
+		return &models.UserProfile{}, fmt.Errorf("userProfile GetAllBoardsByOwnerID usecase: %w", err)
+	}
+	userProfile.UserBoards = UserBoards
+
+	return userProfile, nil
 }

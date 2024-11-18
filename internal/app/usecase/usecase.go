@@ -13,10 +13,12 @@ import (
 // Repository interfaces
 type (
 	UserRepository interface {
-		GetLastUserID() (uint64, error)
-		CreateUser(*models.User) error
+		GetUserIDWithEmail(email string) (uint64, error)
+		CreateUser(*models.User) (uint64, error)
 		CheckUserByEmail(*models.User) (bool, error)
-		GetUserInfo(uint64) (response.UserProfileResponse, error)
+		GetUserAvatar(uint64) (string, error)
+		GetUserInfo(*models.User, uint64) (*models.UserProfile, error)
+		GetUserInfoPublic(uint64) (response.UserProfileResponse, error)
 		CheckUserCredentials(*models.User) error
 		UpdateUserInfo(*models.User) error
 		UpdateUserPassword(*models.User) error
@@ -87,6 +89,7 @@ type (
 type (
 	UserUsecaseController struct {
 		repo           UserRepository
+		mediaRepo      MediaRepository
 		authParameters configs.AuthParams
 	}
 
