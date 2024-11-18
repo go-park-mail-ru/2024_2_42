@@ -52,7 +52,6 @@ func (mrc *MediaRepositoryController) GetAllBoardsByOwnerID(ownerID uint64) ([]*
 		return nil, fmt.Errorf("getAllBoardsByOwnerID: %w", err)
 	}
 	defer rows.Close()
-
 	var boards []*models.Board
 	for rows.Next() {
 		var boardID, ownerID uint64

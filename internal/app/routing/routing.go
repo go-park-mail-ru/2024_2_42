@@ -139,15 +139,14 @@ func Route() {
 	mux := mux.NewRouter()
 
 	repo := db.InitDB(logger)
-
-	userRepo := userRepository.NewUserRepository(repo, logger)
-	userUsecase := usecase.NewUserUsecase(userRepo)
-	userDelivery := NewUserDelivery(logger, userUsecase)
-
 	mediaRepo, mediaErr := mediarepository.NewMediaRepository(repo, logger)
 	if mediaErr != nil {
 		logger.Fatal(mediaErr)
 	}
+
+	userRepo := userRepository.NewUserRepository(repo, logger)
+	userUsecase := usecase.NewUserUsecase(userRepo, mediaRepo)
+	userDelivery := NewUserDelivery(logger, userUsecase)
 
 	mediaUsecase := usecase.NewMediaUsecase(mediaRepo)
 	mediaDelivery := NewMediaDelivery(logger, mediaUsecase)

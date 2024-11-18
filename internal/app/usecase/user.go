@@ -13,9 +13,10 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-func NewUserUsecase(repo UserRepository) delivery.UserUsecase {
+func NewUserUsecase(repo UserRepository, mediaRepo MediaRepository) delivery.UserUsecase {
 	return &UserUsecaseController{
 		repo:           repo,
+		mediaRepo:      mediaRepo,
 		authParameters: configs.NewAuthParams(),
 	}
 }
@@ -202,30 +203,28 @@ func (uuc *UserUsecaseController) GetUserAvatar(userID uint64) (string, error) {
 }
 
 func (uuc *UserUsecaseController) GetUserInfo(user *models.User, currUserID uint64) (*models.UserProfile, error) {
-	var userProfile *models.UserProfile
-	userProfile, err := uuc.repo.GetUserInfo(user, currUserID)
-	fmt.Println("getUserInfo userProfile", err)
+	var userProfile *models.UserProfile = &models.UserProfile{}
+	var err error
+	userProfile, err = uuc.repo.GetUserInfo(user, currUserID)
 	if err != nil {
 		return &models.UserProfile{}, fmt.Errorf("userProfile GetUserInfo usecase: %w", err)
 	}
 
 	userProfile.FollowingsCount, err = uuc.repo.GetFollowingsCount(user.UserID)
-	fmt.Println("getFollowingsCount", err)
 	if err != nil {
 		return &models.UserProfile{}, fmt.Errorf("userProfile GetFollowingsCount usecase: %w", err)
 	}
 
 	userProfile.SubscriptionsCount, err = uuc.repo.GetSubsriptionsCount(user.UserID)
-	fmt.Println("getSubscriptionsCount", err)
 	if err != nil {
 		return &models.UserProfile{}, fmt.Errorf("userProfile GetFollowingsCount usecase: %w", err)
 	}
-
-	userProfile.UserBoards, err = uuc.mediaRepo.GetAllBoardsByOwnerID(user.UserID)
-	fmt.Println("getAllBoardsByOwnerID", err)
+	var UserBoards []*models.Board
+	UserBoards, err = uuc.mediaRepo.GetAllBoardsByOwnerID(user.UserID)
 	if err != nil {
 		return &models.UserProfile{}, fmt.Errorf("userProfile GetAllBoardsByOwnerID usecase: %w", err)
 	}
+	userProfile.UserBoards = UserBoards
 
 	return userProfile, nil
 }

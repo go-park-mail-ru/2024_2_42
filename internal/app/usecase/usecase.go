@@ -73,7 +73,6 @@ type (
 	}
 
 	MediaUsecaseController struct {
-		repo     MediaRepository
-		userRepo UserRepository
+		repo MediaRepository
 	}
 )
