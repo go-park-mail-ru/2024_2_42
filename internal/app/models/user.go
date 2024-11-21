@@ -50,6 +50,7 @@ type UserProfile struct {
 	FollowingsCount    uint64     `json:"followings_count"`
 	SubscriptionsCount uint64     `json:"subscriptions_count"`
 	CreationTime       time.Time  `json:"creation_time"`
+	CurrentUser        bool       `json:"current_user"`
 }
 
 func NewUser(userID uint64, userName, email, password string) User {

@@ -249,6 +249,7 @@ func (udc *UserDeliveryController) GetAvatar(w http.ResponseWriter, r *http.Requ
 
 	SendUserAvatarResponse(w, udc.Logger, response.UserAvatar{
 		Message:   "Succes!",
+		UserID:    currUserID,
 		AvatarUrl: userAvatar,
 	})
 }

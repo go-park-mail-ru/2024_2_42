@@ -73,16 +73,16 @@ func (mrc *MediaRepositoryController) GetAllBoardsByOwnerID(ownerID uint64) ([]*
 			boardDescription = *description
 		}
 
-		boardTitle := ""
+		boardName := ""
 		if title != nil {
-			boardTitle = *title
+			boardName = *title
 		}
 
 		boards = append(boards, &models.Board{
 			BoardID:      boardID,
 			OwnerID:      ownerID,
 			Cover:        boardCover,
-			Name:         boardTitle,
+			Name:         boardName,
 			Description:  boardDescription,
 			Public:       public,
 			CreationTime: creationTime,

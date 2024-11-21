@@ -44,7 +44,9 @@ func (mrc *MediaRepositoryController) GetAllPins(userID uint64) ([]*models.Pin, 
 			&pin.AuthorID,
 			&pin.MediaUrl,
 			&pin.Title,
-			&pin.Description)
+			&pin.Description,
+			&pin.Bookmarks,
+			&pin.Views)
 		if err != nil {
 			return nil, fmt.Errorf("getAllPins rows.Next: %w", err)
 		}
@@ -102,14 +104,40 @@ func (mrc *MediaRepositoryController) GetPinPreviewInfoByPinID(pinID uint64) (*m
 func (mrc *MediaRepositoryController) GetPinPageInfoByPinID(pinID uint64) (*models.Pin, error) {
 	var pinPreviewInfo models.Pin
 
-	err := mrc.db.QueryRow(GetPinPageInfoByPinID, pinID).Scan(&pinPreviewInfo.PinID, &pinPreviewInfo.AuthorID, &pinPreviewInfo.Title,
-		&pinPreviewInfo.Description, &pinPreviewInfo.RelatedLink, &pinPreviewInfo.Geolocation, &pinPreviewInfo.CreationTime)
+	err := mrc.db.QueryRow(GetPinPageInfoByPinID, pinID).Scan(
+		&pinPreviewInfo.PinID,
+		&pinPreviewInfo.AuthorID,
+		&pinPreviewInfo.Title,
+		&pinPreviewInfo.Description,
+		&pinPreviewInfo.RelatedLink,
+		&pinPreviewInfo.MediaUrl,
+		&pinPreviewInfo.Geolocation,
+		&pinPreviewInfo.CreationTime)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, internal_errors.ErrPinDoesntExists
 		}
 		return nil, fmt.Errorf("psql getPinPageInfoByPinID: %w", err)
 	}
+
+	authorInfo := &models.UserPin{}
+	authorInfo.UserID = pinPreviewInfo.AuthorID
+
+	err = mrc.db.QueryRow(GetUserInfoForPin, &pinPreviewInfo.AuthorID).
+		Scan(&authorInfo.NickName, &authorInfo.AvatarUrl)
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("getAllPins GetUserInfoForPin: %w", err)
+		}
+	}
+
+	err = mrc.db.QueryRow(userRepository.GetFollowingsCount, &pinPreviewInfo.AuthorID).
+		Scan(&authorInfo.FollowingsCount)
+	if err != nil {
+		return nil, fmt.Errorf("getAllPins GetFollowingsCount: %w", err)
+	}
+
+	pinPreviewInfo.AuthorInfo = authorInfo
 
 	return &pinPreviewInfo, nil
 }

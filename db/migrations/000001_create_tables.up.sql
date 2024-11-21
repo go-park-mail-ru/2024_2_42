@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS pin (
         NOT NULL,
     geolocation TEXT,
     views INT DEFAULT 0,
+    bookmarks INT DEFAULT 0,
     comments_allowed BOOLEAN 
         NOT NULL
         DEFAULT true,
