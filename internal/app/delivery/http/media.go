@@ -2,6 +2,7 @@ package delivery
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"mime"
 	"net/http"
@@ -182,7 +183,7 @@ func (mdc *MediaDeliveryController) GetPinPreview(w http.ResponseWriter, r *http
 		})
 		return
 	}
-	author, err := mdc.Usecase.GetPinAuthorNameByUserID(userID)
+	author, err := mdc.Usecase.GetPinAuthorNickNameByUserID(userID)
 	if err != nil {
 		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
 			Internal: err,
@@ -191,7 +192,7 @@ func (mdc *MediaDeliveryController) GetPinPreview(w http.ResponseWriter, r *http
 	}
 
 	SendPinPreviewResponse(w, mdc.Logger, response.PinPreviewResponse{
-		AuthorName:            author.UserName,
+		AuthorName:            author.NickName,
 		AuthorAvatarUrl:       *author.AvatarUrl,
 		AuthorFollowersNumber: 0,
 		MediaUrl:              *pin.MediaUrl,
@@ -226,7 +227,7 @@ func (mdc *MediaDeliveryController) GetPinPage(w http.ResponseWriter, r *http.Re
 		})
 		return
 	}
-	author, err := mdc.Usecase.GetPinAuthorNameByUserID(userID)
+	author, err := mdc.Usecase.GetPinAuthorNickNameByUserID(userID)
 	if err != nil {
 		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
 			Internal: err,
@@ -235,7 +236,7 @@ func (mdc *MediaDeliveryController) GetPinPage(w http.ResponseWriter, r *http.Re
 	}
 
 	SendPinPageResponse(w, mdc.Logger, response.PinPageResponse{
-		AuthorName:            author.UserName,
+		AuthorName:            author.NickName,
 		AuthorAvatarUrl:       *author.AvatarUrl,
 		AuthorFollowersNumber: 0,
 		MediaUrl:              *pin.MediaUrl,
@@ -424,7 +425,7 @@ func (mdc *MediaDeliveryController) CreateBookmark(w http.ResponseWriter, r *htt
 	}
 
 	err = mdc.Usecase.CreatePinBookmark(&bookmark)
-	if err != nil {
+	if err != nil && !errors.Is(err, internal_errors.ErrBookmarkDoesntExists) {
 		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
 			Internal: err,
 		})
@@ -437,16 +438,16 @@ func (mdc *MediaDeliveryController) CreateBookmark(w http.ResponseWriter, r *htt
 }
 
 func (mdc *MediaDeliveryController) DeleteBookmark(w http.ResponseWriter, r *http.Request) {
-	bookmarkIDStr := mux.Vars(r)["bookmark_id"]
-	bookmarkID, err := strconv.ParseUint(bookmarkIDStr, 10, 64)
+	var bookmark models.Bookmark
+	err := json.NewDecoder(r.Body).Decode(&bookmark)
 	if err != nil {
 		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
-			Internal: err,
+			General: err, Internal: internal_errors.ErrInvalidOrMissingRequestBody,
 		})
 		return
 	}
 
-	err = mdc.Usecase.DeletePinBookmarkByBookmarkID(bookmarkID)
+	err = mdc.Usecase.DeletePinBookmarkByOwnerIDAndPinID(bookmark)
 	if err != nil {
 		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
 			Internal: err,

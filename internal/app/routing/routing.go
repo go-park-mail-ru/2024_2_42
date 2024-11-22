@@ -126,9 +126,9 @@ func InitializeMediaLayerRoutings(rh *RoutingHandler, mediaHandlers MediaDeliver
 	rh.mux.HandleFunc("/boards/{board_id}/addpin/{pin_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.AddPinToBoard)).Methods("POST")
 	rh.mux.HandleFunc("/boards/{board_id}/pins", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetBoardPins)).Methods("GET")
 
-	rh.mux.HandleFunc("/create-bookmark", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.CreateBookmark)).Methods("POST")
-	rh.mux.HandleFunc("/bookmark/{bookmark_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetBookmark)).Methods("GET")
-	rh.mux.HandleFunc("/bookmark/delete/{bookmark_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.DeleteBookmark)).Methods("DELETE")
+	rh.mux.HandleFunc("/create-bookmark", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.CreateBookmark)).Methods("POST")
+	rh.mux.HandleFunc("/bookmark/{bookmark_id}", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetBookmark)).Methods("GET")
+	rh.mux.HandleFunc("/bookmark/delete/", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.DeleteBookmark)).Methods("DELETE")
 }
 
 func Route() {
@@ -150,7 +150,7 @@ func Route() {
 	userUsecase := usecase.NewUserUsecase(userRepo, mediaRepo)
 	userDelivery := NewUserDelivery(logger, userUsecase)
 
-	mediaUsecase := usecase.NewMediaUsecase(mediaRepo)
+	mediaUsecase := usecase.NewMediaUsecase(mediaRepo, userRepo)
 	mediaDelivery := NewMediaDelivery(logger, mediaUsecase)
 
 	rh := NewRoutingHandler(logger, mux, userUsecase)

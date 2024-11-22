@@ -26,7 +26,7 @@ type (
 		Feed(uint64) ([]*models.Pin, error)
 		GetPinPreviewInfo(pinID uint64) (*models.Pin, error)
 		GetPinPageInfo(pinID uint64) (*models.Pin, error)
-		GetPinAuthorNameByUserID(userID uint64) (*models.User, error)
+		GetPinAuthorNickNameByUserID(userID uint64) (*models.UserPin, error)
 		GetAllCommentaries(pinID uint64) ([]*models.Comment, error)
 		CreatePin(pin *models.Pin) error
 		UpdatePinInfo(pin *models.Pin) error
@@ -39,7 +39,9 @@ type (
 		GetBookmarkOnUserPin(ownerID, pinID uint64) (uint64, error)
 		CreatePinBookmark(bookmark *models.Bookmark) error
 		GetPinBookmarksNumber(pinID uint64) (uint64, error)
-		DeletePinBookmarkByBookmarkID(bookmarkID uint64) error
+		DeletePinBookmarkByOwnerIDAndPinID(bookmark models.Bookmark) error
+		UpdateBookmarksCountIncrease(pinID uint64) error
+		UpdateBookmarksCountDecrease(pinID uint64) error
 
 		GetAllUserBoards(ownerID uint64, currUserID uint64) ([]*models.Board, error)
 		GetBoard(boardID uint64) (*models.Board, error)

@@ -17,6 +17,7 @@ type Pin struct {
 	BoardID      uint64     `json:"board_id"`
 	Boards       []*Board   `json:"available_boards"`
 	Commentaries []*Comment `json:"commentaries"`
+	IsBookmarked bool       `json:"is_bookmarked"`
 	Bookmarks    uint64     `json:"bookmarks"`
 	Views        uint64     `json:"views"`
 	Geolocation  *string    `json:"geolocation"`

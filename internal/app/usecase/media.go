@@ -2,6 +2,9 @@ package usecase
 
 import (
 	"bytes"
+	"database/sql"
+	"errors"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	delivery "pinset/internal/app/delivery/http"
@@ -10,9 +13,10 @@ import (
 	internal_errors "pinset/internal/errors"
 )
 
-func NewMediaUsecase(repo MediaRepository) delivery.MediaUsecase {
+func NewMediaUsecase(repo MediaRepository, userRepo UserRepository) delivery.MediaUsecase {
 	return &MediaUsecaseController{
-		repo: repo,
+		repo:     repo,
+		userRepo: userRepo,
 	}
 }
 
@@ -55,7 +59,45 @@ func (muc *MediaUsecaseController) UploadMedia(files []*multipart.FileHeader) ([
 //////////////////////// PINS ////////////////////////////
 
 func (muc *MediaUsecaseController) Feed(userID uint64) ([]*models.Pin, error) {
-	return muc.repo.GetAllPins(userID)
+	pinSet, err := muc.repo.GetAllPins(userID)
+	if err != nil {
+		return nil, fmt.Errorf("feed usecase: %w", err)
+	}
+
+	for _, pin := range pinSet {
+		pin.AuthorInfo, err = muc.GetPinAuthorNickNameByUserID(pin.AuthorID)
+		if err != nil {
+			return nil, fmt.Errorf("feed usecase GetPinAuthorNickNameByUserID: %w", err)
+		}
+
+		pin.AuthorInfo.FollowingsCount, err = muc.userRepo.GetFollowingsCount(pin.AuthorID)
+		if err != nil {
+			return nil, fmt.Errorf("feed usecase GetFollowingsCount: %w", err)
+		}
+
+		if userID != 0 {
+			var availableBoards []*models.Board
+			availableBoards, err = muc.repo.GetAllBoardsByOwnerID(userID)
+			if err != nil {
+				return nil, fmt.Errorf("feed usecase GetAllBoardsByOwnerID: %w", err)
+			}
+
+			pin.Boards = availableBoards
+
+			var isBookmarked uint64
+			isBookmarked, err = muc.repo.GetBookmarkOnUserPin(userID, pin.PinID)
+			if err != nil {
+				if !errors.Is(err, sql.ErrNoRows) {
+					return nil, fmt.Errorf("feed usecase GetBookmarkUserPin: %w", err)
+				}
+			}
+
+			if isBookmarked != 0 {
+				pin.IsBookmarked = true
+			}
+		}
+	}
+	return pinSet, nil
 }
 
 func (muc *MediaUsecaseController) GetPinPreviewInfo(pinID uint64) (*models.Pin, error) {
@@ -66,8 +108,8 @@ func (muc *MediaUsecaseController) GetPinPageInfo(pinID uint64) (*models.Pin, er
 	return muc.repo.GetPinPageInfoByPinID(pinID)
 }
 
-func (mrc *MediaUsecaseController) GetPinAuthorNameByUserID(userID uint64) (*models.User, error) {
-	return mrc.repo.GetPinAuthorNameByUserID(userID)
+func (mrc *MediaUsecaseController) GetPinAuthorNickNameByUserID(userID uint64) (*models.UserPin, error) {
+	return mrc.repo.GetPinAuthorNickNameByUserID(userID)
 }
 
 func (muc *MediaUsecaseController) GetPinBookmarksNumber(pinID uint64) (uint64, error) {
@@ -99,11 +141,30 @@ func (muc *MediaUsecaseController) GetBookmarkOnUserPin(ownerID, pinID uint64) (
 }
 
 func (muc *MediaUsecaseController) CreatePinBookmark(bookmark *models.Bookmark) error {
-	return muc.repo.CreatePinBookmark(bookmark)
+	err := muc.repo.CreatePinBookmark(bookmark)
+	if err != nil {
+		return fmt.Errorf("createPinBookmark usecase: %w", err)
+	}
+
+	err = muc.repo.UpdateBookmarksCountIncrease(bookmark.PinID)
+	if err != nil {
+		return fmt.Errorf("updateBookmarksCountIncrease usecase: %w", err)
+	}
+
+	return nil
 }
 
-func (muc *MediaUsecaseController) DeletePinBookmarkByBookmarkID(bookmarkID uint64) error {
-	return muc.repo.DeletePinBookmarkByBookmarkID(bookmarkID)
+func (muc *MediaUsecaseController) DeletePinBookmarkByOwnerIDAndPinID(bookmark models.Bookmark) error {
+	err := muc.repo.DeletePinBookmarkByOwnerIDAndPinID(bookmark)
+	if err != nil {
+		return fmt.Errorf("deletePinBookmarkByOwnerIDAndPinID usecase: %w", err)
+	}
+
+	err = muc.repo.UpdateBookmarksCountDecrease(bookmark.PinID)
+	if err != nil {
+		return fmt.Errorf("UpdatePinBookmarksByPinID usecase: %w", err)
+	}
+	return nil
 }
 
 //////////////////////// BOARDS //////////////////////////
@@ -148,4 +209,12 @@ func (muc *MediaUsecaseController) GetBoardPins(boardID uint64) ([]*models.Pin, 
 
 func (muc *MediaUsecaseController) AddPinToBoard(boardID uint64, pinID uint64) error {
 	return muc.repo.AddPinToBoard(boardID, pinID)
+}
+
+func (muc *MediaUsecaseController) UpdateBookmarksCountIncrease(pinID uint64) error {
+	return muc.repo.UpdateBookmarksCountIncrease(pinID)
+}
+
+func (muc *MediaUsecaseController) UpdateBookmarksCountDecrease(pinID uint64) error {
+	return muc.repo.UpdateBookmarksCountDecrease(pinID)
 }
