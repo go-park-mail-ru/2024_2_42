@@ -20,7 +20,7 @@ func (mrc *MediaRepositoryController) CreateChat() (*models.ChatCreateInfo, erro
 func (mrc *MediaRepositoryController) AddUserToChat(chatID uint64, userID uint64) error {
 	var createdChatID, createdUserID uint64
 	err := mrc.db.QueryRow(`INSERT INTO user_chat (user_id, chat_id) VALUES ($1, $2)
-	 RETURNING userID, chatID`, userID, chatID).Scan(&createdUserID, &createdChatID)
+	 RETURNING user_id, chat_id`, userID, chatID).Scan(&createdUserID, &createdChatID)
 
 	if err != nil {
 		return fmt.Errorf("psql AddUserToChat: %w", err)

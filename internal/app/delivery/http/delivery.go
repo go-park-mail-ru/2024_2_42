@@ -21,6 +21,8 @@ type (
 		GetUserInfo(*models.User, uint64) (*models.UserProfile, error)
 		GetUserInfoPublic(uint64) (*response.UserProfileResponse, error)
 		UpdateUserInfo(*models.User) error
+		GetUsersByParams(*models.UserSearchParams) ([]*models.UserInfo, error)
+		GetCompanionsForUser(uint64, *models.UserSearchParams) ([]*models.UserInfo, error)
 	}
 
 	MediaUsecase interface {
@@ -62,6 +64,8 @@ type (
 		AddChatMessage(message *models.Message) (*models.MessageCreateInfo, error)
 		GetChatUsers(chatID uint64) ([]uint64, error)
 		GetUserChats(userID uint64) ([]*models.ChatInfo, error)
+
+		CreateChat(req *models.ChatCreateRequest) (*models.ChatInfo, error)
 	}
 )
 

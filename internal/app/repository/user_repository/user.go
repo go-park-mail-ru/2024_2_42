@@ -9,6 +9,7 @@ import (
 	"pinset/internal/app/session"
 	"pinset/internal/app/usecase"
 	internal_errors "pinset/internal/errors"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 )
@@ -82,6 +83,55 @@ func (urc *UserRepositoryController) CheckUserCredentials(user *models.User) err
 		return internal_errors.ErrBadPassword
 	}
 	return nil
+}
+
+func (urc *UserRepositoryController) GetUsersByParams(userParams *models.UserSearchParams) ([]*models.UserInfo, error) {
+	fmt.Println("YESYESYES")
+	queryString := `SELECT user_id, user_name, nick_name, avatar_url FROM "user" WHERE `
+	conditions := make([]string, 0)
+	params := make([]interface{}, 0)
+
+	if userParams.NickName != nil {
+		conditions = append(conditions, `(LOWER(nick_name) LIKE '%' || $1 || '%')`)
+		params = append(params, strings.ToLower(*userParams.NickName))
+	}
+	if userParams.Email != nil {
+		conditions = append(conditions, `(LOWER(email) LIKE '%' || $2 || '%')`)
+		params = append(params, strings.ToLower(*userParams.Email))
+	}
+	if userParams.UserName != nil {
+		conditions = append(conditions, `(LOWER(user_name) LIKE '%' || $3 || '%')`)
+		params = append(params, strings.ToLower(*userParams.UserName))
+	}
+	if userParams.Gender != nil {
+		conditions = append(conditions, `(LOWER(gender) LIKE $4)`)
+		params = append(params, strings.ToLower(*userParams.Gender))
+	}
+	queryString += strings.Join(conditions, ` AND `)
+	fmt.Println(queryString)
+
+	rows, err := urc.db.Query(queryString, params...)
+	if err != nil {
+		return nil, fmt.Errorf("getUsersByParams: %w", err)
+	}
+	defer rows.Close()
+
+	res := make([]*models.UserInfo, 0)
+
+	for rows.Next() {
+		var foundUser *models.UserInfo = &models.UserInfo{}
+		err := rows.Scan(&foundUser.UserID, &foundUser.UserName, &foundUser.NickName, &foundUser.AvatarUrl)
+		if err != nil {
+			return nil, fmt.Errorf("getUsersByParams: rows.Next %w", err)
+		}
+		res = append(res, foundUser)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("getUsersByParams: rows.Err %w", err)
+	}
+
+	return res, nil
 }
 
 func (urc *UserRepositoryController) GetUserInfo(user *models.User, currUserID uint64) (*models.UserProfile, error) {

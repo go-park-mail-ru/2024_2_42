@@ -62,3 +62,8 @@ type ChatInfo struct {
 	ChatID    uint64                       `json:"chat_id"`
 	Companion response.UserProfileResponse `json:"companion"`
 }
+
+type ChatCreateRequest struct {
+	UserID      uint64
+	CompanionID uint64
+}

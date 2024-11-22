@@ -35,6 +35,7 @@ type (
 		GetAvatar(w http.ResponseWriter, r *http.Request)
 		GetUserInfo(w http.ResponseWriter, r *http.Request)
 		UpdateUserInfo(w http.ResponseWriter, r *http.Request)
+		GetUsersByParams(w http.ResponseWriter, r *http.Request)
 	}
 
 	MediaDelivery interface {
@@ -64,6 +65,7 @@ type (
 		HandShake(w http.ResponseWriter, r *http.Request)
 		GetAllChatMessages(w http.ResponseWriter, r *http.Request)
 		GetUserChats(w http.ResponseWriter, r *http.Request)
+		CreateChat(w http.ResponseWriter, r *http.Request)
 	}
 )
 
@@ -102,6 +104,7 @@ func InitializeUserLayerRoutings(rh *RoutingHandler, userHandlers UserDelivery) 
 	rh.mux.HandleFunc("/is_authorized", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.IsAuthorized)).Methods("GET")
 	rh.mux.HandleFunc("/get_avatar", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.GetAvatar)).Methods("GET")
 	rh.mux.HandleFunc("/user/{user_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.GetUserInfo)).Methods("GET")
+	rh.mux.HandleFunc("/users/by/params", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, userHandlers.GetUsersByParams)).Methods("POST")
 }
 
 func NewMediaDelivery(logger *logrus.Logger, usecase delivery.MediaUsecase) MediaDelivery {
@@ -157,7 +160,7 @@ func InitializeMessageLayerRoutings(rh *RoutingHandler, messageHandlers MessageD
 	rh.mux.HandleFunc("/handshake", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, messageHandlers.HandShake)).Methods("GET")
 	rh.mux.HandleFunc("/chat/{chat_id}/messages", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, messageHandlers.GetAllChatMessages)).Methods("GET")
 	rh.mux.HandleFunc("/mychats", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, messageHandlers.GetUserChats)).Methods("GET")
-
+	rh.mux.HandleFunc("/create/chat/{user_id}", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, messageHandlers.CreateChat)).Methods("POST")
 }
 
 func Route() {

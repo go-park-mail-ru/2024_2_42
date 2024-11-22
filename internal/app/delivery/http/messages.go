@@ -93,6 +93,50 @@ func (mdc *MessageDelieveryController) GetAllChatMessages(w http.ResponseWriter,
 	}
 }
 
+func (mdc *MessageDelieveryController) CreateChat(w http.ResponseWriter, r *http.Request) {
+
+	companionIDStr := mux.Vars(r)["user_id"]
+	companionID, err := strconv.ParseUint(companionIDStr, 10, 64)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+
+	userID, ok := r.Context().Value(configs.UserIdKey).(uint64)
+	if !ok {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			General: internal_errors.ErrUserIsNotAuthorized, Internal: internal_errors.ErrUserIsNotAuthorized,
+		})
+	}
+
+	if userID == companionID {
+		err := fmt.Errorf("userID and companionID are the same")
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrBadRequest,
+		})
+	}
+
+	chatCreateRequest := &models.ChatCreateRequest{UserID: userID, CompanionID: companionID}
+
+	chatInfo, err := mdc.Usecase.CreateChat(chatCreateRequest)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInternalServerError,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(chatInfo); err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInternalServerError,
+		})
+		return
+	}
+}
+
 func (mdc *MessageDelieveryController) HandleConn(user *models.ChatUser) {
 	defer mdc.Usecase.DeleteOnlineUser(user.ID)
 	defer user.Connection.Close()

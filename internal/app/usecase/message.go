@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"fmt"
 	delivery "pinset/internal/app/delivery/http"
 	"pinset/internal/app/models"
 )
@@ -45,18 +44,36 @@ func (muc *MessageUsecaseController) GetChatUsers(chatID uint64) ([]uint64, erro
 	return muc.mediaRepo.GetChatUsers(chatID)
 }
 
+func (muc *MessageUsecaseController) CreateChat(req *models.ChatCreateRequest) (*models.ChatInfo, error) {
+	chatCreateInfo, err := muc.mediaRepo.CreateChat()
+	if err != nil {
+		return nil, err
+	}
+	chatID := chatCreateInfo.ID
+	err = muc.mediaRepo.AddUserToChat(chatID, req.UserID)
+	if err != nil {
+		return nil, err
+	}
+	err = muc.mediaRepo.AddUserToChat(chatID, req.CompanionID)
+	if err != nil {
+		return nil, err
+	}
+	companionInfo, err := muc.userRepo.GetUserInfoPublic(req.CompanionID)
+	if err != nil {
+		return nil, err
+	}
+	return &models.ChatInfo{ChatID: chatID, Companion: *companionInfo}, nil
+}
+
 func (muc *MessageUsecaseController) GetUserChats(userID uint64) ([]*models.ChatInfo, error) {
 	chatIDs, err := muc.mediaRepo.GetUserChats(userID)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("user ID usecase", userID)
-	fmt.Println(chatIDs)
 	chats := make([]*models.ChatInfo, 0)
 	for _, chatID := range chatIDs {
 		chat := &models.ChatInfo{ChatID: chatID}
 		userIDs, err := muc.mediaRepo.GetChatUsers(chatID)
-		fmt.Println("chat users", userIDs)
 		if err != nil {
 			return nil, err
 		}
@@ -71,6 +88,5 @@ func (muc *MessageUsecaseController) GetUserChats(userID uint64) ([]*models.Chat
 		}
 		chats = append(chats, chat)
 	}
-	fmt.Println("user chats", chats)
 	return chats, nil
 }

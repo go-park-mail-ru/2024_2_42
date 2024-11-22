@@ -24,6 +24,8 @@ type (
 		UpdateUserPassword(*models.User) error
 		DeleteUserByID(uint64) error
 
+		GetUsersByParams(*models.UserSearchParams) ([]*models.UserInfo, error)
+
 		FollowUser(uint64, uint64) error
 		UnfollowUser(uint64, uint64) error
 		GetAllFollowings(uint64, uint64) ([]uint64, error)
