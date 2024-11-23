@@ -51,6 +51,9 @@ type (
 		CreateBoard(board *models.Board) error
 		UpdateBoard(board *models.Board) error
 		DeleteBoard(boardID uint64) error
+
+		GetRandomSurvey() (*models.SurveyResponse, error)
+		SetMark(markReq *models.Mark) error
 	}
 
 	MessageUsecase interface {

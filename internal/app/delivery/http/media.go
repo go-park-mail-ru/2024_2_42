@@ -644,3 +644,44 @@ func (mdc *MediaDeliveryController) DeleteBoard(w http.ResponseWriter, r *http.R
 		Message: successfullBoardDeletion,
 	})
 }
+
+func (mdc *MediaDeliveryController) GetRandomSurvey(w http.ResponseWriter, r *http.Request) {
+
+	randomSurvey, err := mdc.Usecase.GetRandomSurvey()
+	if err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(randomSurvey); err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInternalServerError,
+		})
+		return
+	}
+}
+
+func (mdc *MediaDeliveryController) SetMark(w http.ResponseWriter, r *http.Request) {
+
+	var markReq *models.Mark
+	err := json.NewDecoder(r.Body).Decode(&markReq)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInvalidOrMissingRequestBody,
+		})
+		return
+	}
+
+	err = mdc.Usecase.SetMark(markReq)
+
+	if err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+}

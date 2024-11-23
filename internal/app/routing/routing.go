@@ -59,6 +59,8 @@ type (
 		CreateBookmark(w http.ResponseWriter, r *http.Request)
 		DeleteBookmark(w http.ResponseWriter, r *http.Request)
 		UploadMedia(w http.ResponseWriter, r *http.Request)
+		GetRandomSurvey(w http.ResponseWriter, r *http.Request)
+		SetMark(w http.ResponseWriter, r *http.Request)
 	}
 
 	MessageDelivery interface {
@@ -138,6 +140,8 @@ func InitializeMediaLayerRoutings(rh *RoutingHandler, mediaHandlers MediaDeliver
 	rh.mux.HandleFunc("/create-bookmark", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.CreateBookmark)).Methods("POST")
 	rh.mux.HandleFunc("/bookmark/{bookmark_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetBookmark)).Methods("GET")
 	rh.mux.HandleFunc("/bookmark/delete/{bookmark_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.DeleteBookmark)).Methods("DELETE")
+	rh.mux.HandleFunc("/random/survey", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetRandomSurvey)).Methods("GET")
+	rh.mux.HandleFunc("/set/mark", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.SetMark)).Methods("POST")
 
 	// rh.mux.HandleFunc("/handshake", delivery.HandShake).Methods("GET")
 }

@@ -76,6 +76,11 @@ type (
 		DeleteMessage(messageID uint64) error
 		UpdateMessage(msg *models.MessageUpdate) error
 		GetChatMessages(chatID uint64) ([]*models.MessageInfo, error)
+
+		GetSurvey(surveyID uint64) (*models.Survey, error)
+		GetSurveyQuestions(surveyID uint64) ([]*models.Question, error)
+		GetRandomSurvey() (*models.Survey, error)
+		SetMark(markReq *models.Mark) error
 	}
 
 	UserOnlineRepo interface {

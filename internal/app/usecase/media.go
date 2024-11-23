@@ -149,3 +149,24 @@ func (muc *MediaUsecaseController) GetBoardPins(boardID uint64) ([]*models.Pin, 
 func (muc *MediaUsecaseController) AddPinToBoard(boardID uint64, pinID uint64) error {
 	return muc.repo.AddPinToBoard(boardID, pinID)
 }
+
+func (muc *MediaUsecaseController) SetMark(markReq *models.Mark) error {
+	return muc.repo.SetMark(markReq)
+}
+
+func (muc *MediaUsecaseController) GetRandomSurvey() (*models.SurveyResponse, error) {
+	randomSurvey, err := muc.repo.GetRandomSurvey()
+	if err != nil {
+		return nil, err
+	}
+
+	surveyQuestions, err := muc.repo.GetSurveyQuestions(randomSurvey.SurveyID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.SurveyResponse{SurveyID: randomSurvey.SurveyID,
+		Title:     randomSurvey.Title,
+		Questions: surveyQuestions,
+	}, nil
+}

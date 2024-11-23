@@ -169,6 +169,25 @@ CREATE TABLE IF NOT EXISTS saved_pin_to_board (
     PRIMARY KEY (board_id, pin_id)
 );
 
+CREATE TABLE IF NOT EXISTS survey (
+    survey_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, 
+    title TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS question (
+    question_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, 
+    survey_id INT REFERENCES survey(survey_id) ON DELETE CASCADE NOT NULL,
+    content  TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS mark (
+    mark_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id INT REFERENCES "user"(user_id) ON DELETE CASCADE NOT NULL,
+    survey_id INT REFERENCES survey(survey_id) ON DELETE CASCADE NOT NULL,
+    question_id INT REFERENCES question(question_id) ON DELETE CASCADE NOT NULL,
+    score INT NOT NULL
+);
+
 
 --Saved pin to section table:
 --Таблица-хранилище соответствия разделов-сохраненных пинов.
