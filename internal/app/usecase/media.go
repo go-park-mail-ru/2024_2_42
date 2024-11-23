@@ -54,8 +54,8 @@ func (muc *MediaUsecaseController) UploadMedia(files []*multipart.FileHeader) ([
 
 //////////////////////// PINS ////////////////////////////
 
-func (muc *MediaUsecaseController) Feed() ([]*models.Pin, error) {
-	return muc.repo.GetAllPins()
+func (muc *MediaUsecaseController) Feed(userID uint64) ([]*models.Pin, error) {
+	return muc.repo.GetAllPins(userID)
 }
 
 func (muc *MediaUsecaseController) GetPinPreviewInfo(pinID uint64) (*models.Pin, error) {
@@ -108,7 +108,7 @@ func (muc *MediaUsecaseController) DeletePinBookmarkByBookmarkID(bookmarkID uint
 
 //////////////////////// BOARDS //////////////////////////
 
-func (muc *MediaUsecaseController) GetAllUserBoards(ownerID uint64) ([]*models.Board, error) {
+func (muc *MediaUsecaseController) GetAllUserBoards(ownerID uint64, currUserID uint64) ([]*models.Board, error) {
 	return muc.repo.GetAllBoardsByOwnerID(ownerID)
 }
 
@@ -126,4 +126,47 @@ func (muc *MediaUsecaseController) UpdateBoard(board *models.Board) error {
 
 func (muc *MediaUsecaseController) DeleteBoard(boardID uint64) error {
 	return muc.repo.DeleteBoardByBoardID(boardID)
+}
+
+func (muc *MediaUsecaseController) GetBoardPins(boardID uint64) ([]*models.Pin, error) {
+	PinIDs, err := muc.repo.GetBoardPinsByBoardID(boardID)
+
+	var pins []*models.Pin
+
+	if err != nil {
+		return nil, err
+	}
+	for _, pinID := range PinIDs {
+		pin, err := muc.GetPinPageInfo(pinID)
+		if err != nil {
+			return nil, err
+		}
+		pins = append(pins, pin)
+	}
+	return pins, nil
+}
+
+func (muc *MediaUsecaseController) AddPinToBoard(boardID uint64, pinID uint64) error {
+	return muc.repo.AddPinToBoard(boardID, pinID)
+}
+
+func (muc *MediaUsecaseController) SetMark(markReq *models.Mark) error {
+	return muc.repo.SetMark(markReq)
+}
+
+func (muc *MediaUsecaseController) GetRandomSurvey() (*models.SurveyResponse, error) {
+	randomSurvey, err := muc.repo.GetRandomSurvey()
+	if err != nil {
+		return nil, err
+	}
+
+	surveyQuestions, err := muc.repo.GetSurveyQuestions(randomSurvey.SurveyID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.SurveyResponse{SurveyID: randomSurvey.SurveyID,
+		Title:     randomSurvey.Title,
+		Questions: surveyQuestions,
+	}, nil
 }

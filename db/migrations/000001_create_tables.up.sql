@@ -4,8 +4,7 @@ CREATE TABLE IF NOT EXISTS "user" (
     user_id INT
         GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_name TEXT
-        CONSTRAINT user_name_length CHECK (CHAR_LENGTH(user_name) <= 255)
-        NOT NULL,
+        CONSTRAINT user_name_length CHECK (CHAR_LENGTH(user_name) <= 255),
     nick_name TEXT
         CONSTRAINT nick_name_length CHECK (CHAR_LENGTH(nick_name) <= 255)
         UNIQUE
@@ -38,6 +37,7 @@ CREATE TABLE IF NOT EXISTS board (
     owner_id INT REFERENCES "user"(user_id) 
         ON DELETE CASCADE
         NOT NULL,
+    cover TEXT,
 	name TEXT 
         CONSTRAINT board_name_length CHECK (CHAR_LENGTH(name) <= 255)
         NOT NULL,
@@ -64,19 +64,16 @@ CREATE TABLE IF NOT EXISTS pin (
         NOT NULL,
 	description TEXT
         CONSTRAINT decription_length CHECK(CHAR_LENGTH(description) <= 500),
-    board_id INT REFERENCES board(board_id)
-        ON DELETE CASCADE
-        NOT NULL,
     media_url TEXT
         NOT NULL,
     related_link TEXT
         NOT NULL,
-    geolocation TEXT
-    views INT DEFAULT 0
-    commentsAllowed BOOLEAN 
+    geolocation TEXT,
+    views INT DEFAULT 0,
+    comments_allowed BOOLEAN 
         NOT NULL
         DEFAULT true,
-    awardsAllowed BOOLEAN 
+    awards_allowed BOOLEAN 
         NOT NULL
         DEFAULT true,
     creation_time TIMESTAMPTZ DEFAULT NOW(),
@@ -132,6 +129,34 @@ CREATE TABLE IF NOT EXISTS bookmark (
     bookmark_time TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Chat table:
+-- Таблица чатов, которые существуют на данный момент.
+
+CREATE TABLE IF NOT EXISTS chat (
+    chat_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+);
+
+-- Message table:
+-- Таблица всех сообщений между пользователями в чатах.
+
+CREATE TABLE IF NOT EXISTS msg (
+    message_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, 
+    author_id INT REFERENCES "user" (user_id) ON DELETE CASCADE NOT NULL,
+    chat_id INT REFERENCES chat (chat_id) ON DELETE CASCADE NOT NULL, 
+    content TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL
+);
+
+-- User Chat table:
+-- Таблица-соответствие юзеров и чатов.
+
+CREATE TABLE IF NOT EXISTS user_chat (
+    user_id INT REFERENCES "user" (user_id) ON DELETE CASCADE NOT NULL, 
+    chat_id INT REFERENCES chat (chat_id) ON DELETE CASCADE NOT NULL,
+    PRIMARY KEY (user_id, chat_id)
+);
+
+
 -- Saved pin to board table:
 -- Таблица-хранилище соответствия досок-сохраненных пинов.
 CREATE TABLE IF NOT EXISTS saved_pin_to_board (
@@ -142,6 +167,25 @@ CREATE TABLE IF NOT EXISTS saved_pin_to_board (
         ON DELETE CASCADE
         NOT NULL,
     PRIMARY KEY (board_id, pin_id)
+);
+
+CREATE TABLE IF NOT EXISTS survey (
+    survey_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, 
+    title TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS question (
+    question_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, 
+    survey_id INT REFERENCES survey(survey_id) ON DELETE CASCADE NOT NULL,
+    content  TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS mark (
+    mark_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id INT REFERENCES "user"(user_id) ON DELETE CASCADE NOT NULL,
+    survey_id INT REFERENCES survey(survey_id) ON DELETE CASCADE NOT NULL,
+    question_id INT REFERENCES question(question_id) ON DELETE CASCADE NOT NULL,
+    score INT NOT NULL
 );
 
 

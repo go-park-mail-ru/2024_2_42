@@ -60,3 +60,7 @@ func NewLoggerParams() LoggerParams {
 		FilePath: loggerfilePath,
 	}
 }
+
+type ctxUserIDKeyType string
+
+const UserIdKey ctxUserIDKeyType = "user_id"

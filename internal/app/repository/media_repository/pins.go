@@ -5,13 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"pinset/internal/app/models"
+	userRepository "pinset/internal/app/repository/user_repository"
 	"time"
 
 	internal_errors "pinset/internal/errors"
 )
 
 func (mrc *MediaRepositoryController) CreatePin(pin *models.Pin) error {
-	err := mrc.db.QueryRow(CreatePin, pin.AuthorID, pin.Title, pin.Description, pin.BoardID, pin.MediaUrl, pin.RelatedLink).Scan(&pin.PinID)
+	err := mrc.db.QueryRow(CreatePin, pin.AuthorID, pin.Title, pin.Description, pin.MediaUrl, pin.RelatedLink).Scan(&pin.PinID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			pin.PinID = 0
@@ -27,7 +28,7 @@ func (mrc *MediaRepositoryController) CreatePin(pin *models.Pin) error {
 	return nil
 }
 
-func (mrc *MediaRepositoryController) GetAllPins() ([]*models.Pin, error) {
+func (mrc *MediaRepositoryController) GetAllPins(userID uint64) ([]*models.Pin, error) {
 	rows, err := mrc.db.Query(GetAllPins)
 	if err != nil {
 		return nil, fmt.Errorf("getAllPins: %w", err)
@@ -36,18 +37,46 @@ func (mrc *MediaRepositoryController) GetAllPins() ([]*models.Pin, error) {
 
 	var pins []*models.Pin
 	for rows.Next() {
-		var pinID, authorID uint64
-		var media_url string
+		pin := &models.Pin{}
 
-		if err := rows.Scan(&pinID, &authorID, &media_url); err != nil {
+		err := rows.Scan(
+			&pin.PinID,
+			&pin.AuthorID,
+			&pin.MediaUrl,
+			&pin.Title,
+			&pin.Description)
+		if err != nil {
 			return nil, fmt.Errorf("getAllPins rows.Next: %w", err)
 		}
+		authorInfo := &models.UserPin{}
+		authorInfo.UserID = pin.AuthorID
 
-		pins = append(pins, &models.Pin{
-			PinID:    pinID,
-			AuthorID: authorID,
-			MediaUrl: media_url,
-		})
+		err = mrc.db.QueryRow(GetUserInfoForPin, &pin.AuthorID).
+			Scan(&authorInfo.NickName, &authorInfo.AvatarUrl)
+		if err != nil {
+			if !errors.Is(err, sql.ErrNoRows) {
+				return nil, fmt.Errorf("getAllPins GetUserInfoForPin: %w", err)
+			}
+		}
+
+		err = mrc.db.QueryRow(userRepository.GetFollowingsCount, &pin.AuthorID).
+			Scan(&authorInfo.FollowingsCount)
+		if err != nil {
+			return nil, fmt.Errorf("getAllPins GetFollowingsCount: %w", err)
+		}
+
+		if userID != uint64(0) {
+			var availableBoards []*models.Board
+			availableBoards, err = mrc.GetAllBoardsByOwnerID(userID)
+			if err != nil {
+				return nil, fmt.Errorf("getAllPins GetAllBoardsByOwnerID: %w", err)
+			}
+			pin.Boards = availableBoards
+		}
+
+		pin.AuthorInfo = authorInfo
+
+		pins = append(pins, pin)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("getAllPins rows.Err: %w", err)

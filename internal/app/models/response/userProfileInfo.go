@@ -8,7 +8,7 @@ type UserProfileResponse struct {
 	Description            *string    `json:"description"`
 	BirthTime              *time.Time `json:"birth_time"`
 	Gender                 *string    `json:"gender"`
-	AvatarUrl              *string    `json:"avatart_url"`
+	AvatarUrl              *string    `json:"avatar_url"`
 	NumOfUserFollowings    uint64     `json:"number_of_user_followings"`
 	NumOfUserSubscriptions uint64     `json:"number_of_user_subscriptions"`
 }

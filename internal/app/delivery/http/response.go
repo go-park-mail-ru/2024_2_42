@@ -3,6 +3,7 @@ package delivery
 import (
 	"encoding/json"
 	"net/http"
+	"pinset/internal/app/models"
 	"pinset/internal/app/models/response"
 	internal_errors "pinset/internal/errors"
 
@@ -151,7 +152,7 @@ func SendResponseBookmarkExists(w http.ResponseWriter, logger *logrus.Logger, rb
 	}
 }
 
-func SendUserProfileResponse(w http.ResponseWriter, logger *logrus.Logger, ar response.UserProfileResponse) {
+func SendUserProfileResponse(w http.ResponseWriter, logger *logrus.Logger, ar *models.UserProfile) {
 	respJSON, err := json.Marshal(ar)
 	if err != nil {
 		internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
@@ -165,6 +166,18 @@ func SendUserProfileResponse(w http.ResponseWriter, logger *logrus.Logger, ar re
 }
 
 func SendInfoResponse(w http.ResponseWriter, logger *logrus.Logger, sr response.ResponseInfo) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(sr); err != nil {
+		internal_errors.SendErrorResponse(w, logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrCantProcessFormData,
+		})
+		return
+	}
+}
+
+func SendUserAvatarResponse(w http.ResponseWriter, logger *logrus.Logger, sr response.UserAvatar) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
