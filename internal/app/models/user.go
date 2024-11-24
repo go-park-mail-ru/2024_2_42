@@ -73,7 +73,6 @@ func (u *User) Sanitize() {
 func (u User) Valid() error {
 	if len(u.NickName) >= minNickNameLength &&
 		len(u.Password) >= minPasswordLength &&
-		u.BirthTime.Before(time.Now()) &&
 		u.emailValid() {
 		return nil
 	}

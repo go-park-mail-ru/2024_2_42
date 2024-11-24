@@ -39,10 +39,25 @@ func (mrc *MediaRepositoryController) AddPinToBoard(boardID uint64, pinID uint64
 	var updatedBoardID uint64
 	err := mrc.db.QueryRow(AddPinToBoard, boardID, pinID).Scan(&updatedBoardID)
 	if err != nil {
-		return fmt.Errorf("AddPinToBoard %w", err)
+		if !errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("AddPinToBoard: %w", err)
+		}
 	}
 
 	mrc.logger.WithField("Pin successfully added to board", updatedBoardID).Info("addPinToBoard func")
+	return nil
+}
+
+func (mrc *MediaRepositoryController) DeletePinFromBoardByBoardIDAndPinID(boardID uint64, pinID uint64) error {
+	var updatedBoardID uint64
+	err := mrc.db.QueryRow(DeletePinFromBoard, boardID, pinID).Scan(&updatedBoardID)
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("DeletPinFromBoard %w", err)
+		}
+	}
+
+	mrc.logger.WithField("Pin successfully deleted from board", updatedBoardID).Info("DeletPinFromBoard func")
 	return nil
 }
 

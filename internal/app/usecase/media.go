@@ -218,3 +218,7 @@ func (muc *MediaUsecaseController) UpdateBookmarksCountIncrease(pinID uint64) er
 func (muc *MediaUsecaseController) UpdateBookmarksCountDecrease(pinID uint64) error {
 	return muc.repo.UpdateBookmarksCountDecrease(pinID)
 }
+
+func (muc *MediaUsecaseController) DeletePinFromBoard(boardID uint64, pinID uint64) error {
+	return muc.repo.DeletePinFromBoardByBoardIDAndPinID(boardID, pinID)
+}

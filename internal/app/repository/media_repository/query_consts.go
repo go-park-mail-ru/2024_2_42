@@ -6,7 +6,8 @@ const (
 
 	CreatePin = `INSERT INTO pin (author_id, title, description, media_url, related_link) VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING RETURNING pin_id;`
 
-	AddPinToBoard            = `INSERT INTO saved_pin_to_board (board_id, pin_id) WITH VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING pin_id;`
+	AddPinToBoard            = `INSERT INTO saved_pin_to_board (board_id, pin_id) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING pin_id;`
+	DeletePinFromBoard       = `DELETE FROM saved_pin_to_board WHERE board_id = $1 AND pin_id = $2;`
 	GetAllPins               = `SELECT pin_id, author_id, media_url, title, description, bookmarks, views FROM pin;`
 	GetPinPreviewInfoByPinID = `SELECT pin_id, author_id, media_url, views FROM pin WHERE pin_id = $1;`
 	GetPinPageInfoByPinID    = `SELECT pin_id, author_id, title, description, related_link, media_url, geolocation, creation_time FROM pin WHERE pin_id = $1;`

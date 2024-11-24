@@ -671,3 +671,36 @@ func (mdc *MediaDeliveryController) DeleteBoard(w http.ResponseWriter, r *http.R
 		Message: successfullBoardDeletion,
 	})
 }
+
+func (mdc *MediaDeliveryController) DeletePinFromBoard(w http.ResponseWriter, r *http.Request) {
+	boardIDStr := mux.Vars(r)["board_id"]
+	pinIDStr := mux.Vars(r)["pin_id"]
+
+	boardID, err := strconv.ParseUint(boardIDStr, 10, 64)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+
+	pinID, err := strconv.ParseUint(pinIDStr, 10, 64)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+
+	err = mdc.Usecase.DeletePinFromBoard(boardID, pinID)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+
+	SendInfoResponse(w, mdc.Logger, response.ResponseInfo{
+		Message: successfullUpdateMessage,
+	})
+}
