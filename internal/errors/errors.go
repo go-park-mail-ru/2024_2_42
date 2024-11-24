@@ -67,8 +67,9 @@ var (
 	ErrBadBoardInputData = errors.New("передана некорректная информация о доске")
 	ErrBadBoardID        = errors.New("id доски не соответствует текущему")
 
-	ErrBookmarkDoesntExists = errors.New("закладка не существует")
-	ErrBadBookmarkInputData = errors.New("передана некорректная информация о закладке")
+	ErrBookmarkDoesntExists  = errors.New("закладка не существует")
+	ErrBookmarkAlreadyExists = errors.New("закладка уже существует")
+	ErrBadBookmarkInputData  = errors.New("передана некорректная информация о закладке")
 )
 
 var ErrorMapping = map[error]struct {
@@ -110,18 +111,18 @@ var ErrorMapping = map[error]struct {
 
 	// Postgres
 	ErrUserAlreadyExists: {HttpCode: 400, InternalCode: 21},
-	ErrUserDoesntExists: {HttpCode: 400, InternalCode: 22},
-	ErrBadPassword: {HttpCode: 400, InternalCode: 23},
-	ErrBadUserInputData: {HttpCode: 400, InternalCode: 24},
-	ErrBadUserID: {HttpCode: 400, InternalCode: 25},
+	ErrUserDoesntExists:  {HttpCode: 400, InternalCode: 22},
+	ErrBadPassword:       {HttpCode: 400, InternalCode: 23},
+	ErrBadUserInputData:  {HttpCode: 400, InternalCode: 24},
+	ErrBadUserID:         {HttpCode: 400, InternalCode: 25},
 
 	ErrPinDoesntExists: {HttpCode: 400, InternalCode: 26},
 	ErrBadPinInputData: {HttpCode: 400, InternalCode: 27},
-	ErrBadPinID: {HttpCode: 400, InternalCode: 28},
+	ErrBadPinID:        {HttpCode: 400, InternalCode: 28},
 
 	ErrBoardDoesntExists: {HttpCode: 400, InternalCode: 29},
 	ErrBadBoardInputData: {HttpCode: 400, InternalCode: 30},
-	ErrBadBoardID: {HttpCode: 400, InternalCode: 31},
+	ErrBadBoardID:        {HttpCode: 400, InternalCode: 31},
 
 	ErrBookmarkDoesntExists: {HttpCode: 400, InternalCode: 32},
 	ErrBadBookmarkInputData: {HttpCode: 400, InternalCode: 33},

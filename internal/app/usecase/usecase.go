@@ -4,17 +4,19 @@ import (
 	"io"
 	"pinset/configs"
 	"pinset/internal/app/models"
-	"pinset/internal/app/models/response"
 	"pinset/internal/app/session"
 )
+
+//go:generate mockgen -source=usecase.go -destination=mocks/usecase_mock.go
 
 // Repository interfaces
 type (
 	UserRepository interface {
-		GetLastUserID() (uint64, error)
-		CreateUser(*models.User) error
+		GetUserIDWithEmail(email string) (uint64, error)
+		CreateUser(*models.User) (uint64, error)
 		CheckUserByEmail(*models.User) (bool, error)
-		GetUserInfo(*models.User) (response.UserProfileResponse, error)
+		GetUserAvatar(uint64) (string, error)
+		GetUserInfo(*models.User, uint64) (*models.UserProfile, error)
 		CheckUserCredentials(*models.User) error
 		UpdateUserInfo(*models.User) error
 		UpdateUserPassword(*models.User) error
@@ -25,7 +27,7 @@ type (
 		GetAllFollowings(uint64, uint64) ([]uint64, error)
 		GetAllSubscriptions(uint64, uint64) ([]uint64, error)
 		GetFollowingsCount(uint64) (uint64, error)
-		GetlSubsriptionsCount(uint64) (uint64, error)
+		GetSubsriptionsCount(uint64) (uint64, error)
 
 		UserHasActiveSession(string) bool
 		Session() *session.SessionsManager
@@ -33,10 +35,10 @@ type (
 
 	MediaRepository interface {
 		CreatePin(pin *models.Pin) error
-		GetAllPins() ([]*models.Pin, error)
+		GetAllPins(uint64) ([]*models.Pin, error)
 		GetPinPreviewInfoByPinID(pinID uint64) (*models.Pin, error)
 		GetPinPageInfoByPinID(pinID uint64) (*models.Pin, error)
-		GetPinAuthorNameByUserID(userID uint64) (*models.User, error)
+		GetPinAuthorNickNameByUserID(userID uint64) (*models.UserPin, error)
 		UpdatePinInfoByPinID(pin *models.Pin) error
 		UpdatePinViewsByPinID(pinID uint64) error
 		UpdatePinUpdateTimeByPinID() error
@@ -45,7 +47,13 @@ type (
 		GetPinBookmarksNumberByPinID(pinID uint64) (uint64, error)
 		GetBookmarkOnUserPin(ownerID, pinID uint64) (uint64, error)
 		CreatePinBookmark(bookmark *models.Bookmark) error
-		DeletePinBookmarkByBookmarkID(bookmarkID uint64) error
+		DeletePinBookmarkByOwnerIDAndPinID(bookmark models.Bookmark) error
+		UpdateBookmarksCountIncrease(pinID uint64) error
+		UpdateBookmarksCountDecrease(pinID uint64) error
+
+		GetBoardPinsByBoardID(boardID uint64) ([]uint64, error)
+		AddPinToBoard(boardID uint64, pinID uint64) error
+		DeletePinFromBoardByBoardIDAndPinID(boardID uint64, pinID uint64) error
 
 		GetAllBoardsByOwnerID(ownerID uint64) ([]*models.Board, error)
 		GetBoardByBoardID(boardID uint64) (*models.Board, error)
@@ -63,10 +71,12 @@ type (
 type (
 	UserUsecaseController struct {
 		repo           UserRepository
+		mediaRepo      MediaRepository
 		authParameters configs.AuthParams
 	}
 
 	MediaUsecaseController struct {
-		repo MediaRepository
+		repo     MediaRepository
+		userRepo UserRepository
 	}
 )

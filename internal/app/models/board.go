@@ -21,6 +21,13 @@ type Board struct {
 	UpdateTime    time.Time `json:"update_time"`
 }
 
+type BoardPin struct {
+	BoardID uint64 `json:"board_id"`
+	Cover   string `json:"board_cover"`
+	Name    string `json:"board_name"`
+	Public  bool   `json:"public"`
+}
+
 func (b *Board) Sanitize() {
 	b.Name = html.EscapeString(b.Name)
 	b.Description = html.EscapeString(b.Description)

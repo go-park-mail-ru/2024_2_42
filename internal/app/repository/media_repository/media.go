@@ -46,9 +46,10 @@ func NewMediaRepository(db *sql.DB, logger *logrus.Logger) (usecase.MediaReposit
 		return nil, fmt.Errorf("minio client: %w", err)
 	}
 
+	logger.Info("MinioRepo created succesful!")
 	return &MediaRepositoryController{
-		db: db,
-		logger: logger,
+		db:              db,
+		logger:          logger,
 		client:          client,
 		ImageBucketName: config.ImageBucketName,
 		VideoBucketName: config.VideoBucketName,
@@ -93,7 +94,6 @@ func (mrc *MediaRepositoryController) UploadMedia(bucketName, fileName string, m
 }
 
 func (mrc *MediaRepositoryController) GeneratePublicMediaUrl(bucketName, objectName string) string {
-	config := s3.NewMinioParams()
-	publicUrl := "http://" + config.Endpoint + "/" + bucketName + "/" + objectName
+	publicUrl := "http://" + s3.MinioEndPoint + "/" + bucketName + "/" + objectName
 	return publicUrl
 }

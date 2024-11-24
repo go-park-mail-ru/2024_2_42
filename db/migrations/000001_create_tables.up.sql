@@ -4,8 +4,7 @@ CREATE TABLE IF NOT EXISTS "user" (
     user_id INT
         GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_name TEXT
-        CONSTRAINT user_name_length CHECK (CHAR_LENGTH(user_name) <= 255)
-        NOT NULL,
+        CONSTRAINT user_name_length CHECK (CHAR_LENGTH(user_name) <= 255),
     nick_name TEXT
         CONSTRAINT nick_name_length CHECK (CHAR_LENGTH(nick_name) <= 255)
         UNIQUE
@@ -38,6 +37,7 @@ CREATE TABLE IF NOT EXISTS board (
     owner_id INT REFERENCES "user"(user_id) 
         ON DELETE CASCADE
         NOT NULL,
+    cover TEXT,
 	name TEXT 
         CONSTRAINT board_name_length CHECK (CHAR_LENGTH(name) <= 255)
         NOT NULL,
@@ -64,19 +64,17 @@ CREATE TABLE IF NOT EXISTS pin (
         NOT NULL,
 	description TEXT
         CONSTRAINT decription_length CHECK(CHAR_LENGTH(description) <= 500),
-    board_id INT REFERENCES board(board_id)
-        ON DELETE CASCADE
-        NOT NULL,
     media_url TEXT
         NOT NULL,
     related_link TEXT
         NOT NULL,
-    geolocation TEXT
-    views INT DEFAULT 0
-    commentsAllowed BOOLEAN 
+    geolocation TEXT,
+    views INT DEFAULT 0,
+    bookmarks INT DEFAULT 0,
+    comments_allowed BOOLEAN 
         NOT NULL
         DEFAULT true,
-    awardsAllowed BOOLEAN 
+    awards_allowed BOOLEAN 
         NOT NULL
         DEFAULT true,
     creation_time TIMESTAMPTZ DEFAULT NOW(),
