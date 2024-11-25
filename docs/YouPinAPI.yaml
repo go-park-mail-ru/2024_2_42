@@ -4,12 +4,12 @@ info:
   description: "This is API-docs of backend server of Harmonica team."
   version: "1.0.0"
 servers:
-- url: https://api.youpin.ru/
+- url: https://api.pinset.ru/
 
 paths:
   /is_authorized:
     get:
-      tags: 
+      tags:
         - Authentication
       summary: "Get auth status"
       parameters: 
@@ -53,12 +53,15 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                - user_email
+                - user_password 
               properties:
-                username:
+                user_email:
                   type: string
-                  example: "user123"
-                  description: "Username login"
-                password:
+                  example: "user@user.com"
+                  description: "User email"
+                user_password:
                   type: string
                   example: "password123"
                   description: "Password for authentification"
@@ -119,7 +122,7 @@ paths:
               schema:
                 $ref: "#/defenitions/err.ErrorResponse"
   
-  /register:
+  /signup:
     post:
       tags:
         - Authentication
@@ -132,7 +135,7 @@ paths:
             schema:
               type: object
               required:
-                - user_nickname
+                - user_name
                 - user_email
                 - user_password
               properties:
@@ -163,7 +166,7 @@ paths:
               schema:
                 $ref: "#/defenitions/err.ErrorResponse"
                 
-        '401':
+        '400':
           description: "Missing or invalid request body"
           content:
             application/json:
@@ -175,7 +178,7 @@ paths:
       tags:
         - Content
       summary: "Resolve pins feed"
-      description: "Returns an array of objects with image data, including the number of likes and comments."
+      description: "Returns an array of objects with image data, including the number of bookmarks and comments."
       parameters:
         - name: "limit"
           in: query
@@ -187,7 +190,7 @@ paths:
           
       responses:
         '200':
-          description: "Successful answer. Returns map of pins with number of likes and comments"
+          description: "Successful answer. Returns map of pins with number of bookmarks and comments"
           content:
             application/json:
               schema:
@@ -206,9 +209,9 @@ paths:
                         pin_url:
                           type: string
                           description: "Pin's url"
-                        pin_likes:
+                        pin_bookmarks:
                           type: integer
-                          description: "Number of likes"
+                          description: "Number of bookmarks"
                         pin_comments:
                           type: integer
                           description: "Number of comments"
@@ -233,12 +236,8 @@ defenitions:
   entity.UserResponse:
     type: object
     properties:
-      use_id:
+      user_id:
         type: integer
-      user_name:
-        type: string
-      user_avatar_url:
-        type: string
         
   entity.UserRegistration:
     type: object

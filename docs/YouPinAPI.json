@@ -7,7 +7,7 @@
     },
     "servers": [
       {
-        "url": "https://api.youpin.ru/"
+        "url": "https://api.pinset.ru/"
       }
     ],
     "paths": {
@@ -173,7 +173,7 @@
           }
         }
       },
-      "/register": {
+      "/signup": {
         "post": {
           "tags": ["Authentication"],
           "summary": "Register new user",
@@ -184,9 +184,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["user_nickname", "user_email", "user_password"],
+                  "required": ["user_name", "user_email", "user_password"],
                   "properties": {
-                    "user_nickname": {
+                    "user_name": {
                       "type": "string",
                       "example": "user123",
                       "description": "User login"
@@ -227,7 +227,7 @@
                 }
               }
             },
-            "401": {
+            "400": {
               "description": "Missing or invalid request body",
               "content": {
                 "application/json": {
@@ -244,7 +244,7 @@
         "get": {
           "tags": ["Content"],
           "summary": "Resolve pins feed",
-          "description": "Returns an array of objects with image data, including the number of likes and comments.",
+          "description": "Returns an array of objects with image data, including the number of bookmarks and comments.",
           "parameters": [
             {
               "name": "limit",
@@ -259,7 +259,7 @@
           ],
           "responses": {
             "200": {
-              "description": "Successful answer. Returns map of pins with number of likes and comments",
+              "description": "Successful answer. Returns map of pins with number of bookmarks and comments",
               "content": {
                 "application/json": {
                   "schema": {
@@ -281,9 +281,9 @@
                               "type": "string",
                               "description": "Pin's URL"
                             },
-                            "pin_likes": {
+                            "pin_bookmarks": {
                               "type": "integer",
-                              "description": "Number of likes"
+                              "description": "Number of bookmarks"
                             },
                             "pin_comments": {
                               "type": "integer",
