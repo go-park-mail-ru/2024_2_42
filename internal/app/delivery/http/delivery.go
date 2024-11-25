@@ -4,7 +4,9 @@ import (
 	"mime/multipart"
 	"pinset/internal/app/models"
 	"pinset/internal/app/models/request"
+	"pinset/internal/app/models/response"
 
+	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,7 +19,10 @@ type (
 		IsAuthorized(string) (uint64, error)
 		GetUserAvatar(uint64) (string, error)
 		GetUserInfo(*models.User, uint64) (*models.UserProfile, error)
+		GetUserInfoPublic(uint64) (*response.UserProfileResponse, error)
 		UpdateUserInfo(*models.User) error
+		GetUsersByParams(*models.UserSearchParams) ([]*models.UserInfo, error)
+		GetCompanionsForUser(uint64, *models.UserSearchParams) ([]*models.UserInfo, error)
 	}
 
 	MediaUsecase interface {
@@ -50,6 +55,21 @@ type (
 		UpdateBoard(board *models.Board) error
 		DeleteBoard(boardID uint64) error
 	}
+
+	MessageUsecase interface {
+		AddOnlineUser(user *models.ChatUser)
+		IsOnlineUser(userID uint64) bool
+		GetOnlineUser(userID uint64) *models.ChatUser
+		DeleteOnlineUser(userID uint64)
+		NumUsersOnline() int
+
+		GetChatMessages(chatID uint64) ([]*models.MessageInfo, error)
+		AddChatMessage(message *models.Message) (*models.MessageCreateInfo, error)
+		GetChatUsers(chatID uint64) ([]uint64, error)
+		GetUserChats(userID uint64) ([]*models.ChatInfo, error)
+
+		CreateChat(req *models.ChatCreateRequest) (*models.ChatInfo, error)
+	}
 )
 
 // Controllers
@@ -62,5 +82,11 @@ type (
 	MediaDeliveryController struct {
 		Usecase MediaUsecase
 		Logger  *logrus.Logger
+	}
+
+	MessageDelieveryController struct {
+		Usecase  MessageUsecase
+		Logger   *logrus.Logger
+		Upgrader websocket.Upgrader
 	}
 )

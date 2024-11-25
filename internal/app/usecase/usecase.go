@@ -4,6 +4,7 @@ import (
 	"io"
 	"pinset/configs"
 	"pinset/internal/app/models"
+	"pinset/internal/app/models/response"
 	"pinset/internal/app/session"
 )
 
@@ -17,10 +18,13 @@ type (
 		CheckUserByEmail(*models.User) (bool, error)
 		GetUserAvatar(uint64) (string, error)
 		GetUserInfo(*models.User, uint64) (*models.UserProfile, error)
+		GetUserInfoPublic(uint64) (*response.UserProfileResponse, error)
 		CheckUserCredentials(*models.User) error
 		UpdateUserInfo(*models.User) error
 		UpdateUserPassword(*models.User) error
 		DeleteUserByID(uint64) error
+
+		GetUsersByParams(*models.UserSearchParams) ([]*models.UserInfo, error)
 
 		FollowUser(uint64, uint64) error
 		UnfollowUser(uint64, uint64) error
@@ -64,6 +68,25 @@ type (
 		GetBucketNameForContentType(fileType string) string
 		HasCorrectContentType(string) bool
 		UploadMedia(string, string, io.Reader, int64) (string, error)
+
+		CreateChat() (*models.ChatCreateInfo, error)
+		AddUserToChat(chatID uint64, userID uint64) error
+		GetChatUsers(chatID uint64) ([]uint64, error)
+		GetUserChats(userID uint64) ([]uint64, error)
+		DeleteChat(chatID uint64) error
+
+		CreateMessage(msg *models.Message) (*models.MessageCreateInfo, error)
+		DeleteMessage(messageID uint64) error
+		UpdateMessage(msg *models.MessageUpdate) error
+		GetChatMessages(chatID uint64) ([]*models.MessageInfo, error)
+	}
+
+	UserOnlineRepo interface {
+		IsOnlineUser(userID uint64) bool
+		GetOnlineUser(userID uint64) *models.ChatUser
+		AddOnlineUser(user *models.ChatUser)
+		DeleteOnlineUser(userID uint64)
+		NumUsersOnline() int
 	}
 )
 
@@ -78,5 +101,11 @@ type (
 	MediaUsecaseController struct {
 		repo     MediaRepository
 		userRepo UserRepository
+	}
+
+	MessageUsecaseController struct {
+		mediaRepo      MediaRepository
+		userOnlineRepo UserOnlineRepo
+		userRepo       UserRepository
 	}
 )

@@ -6,6 +6,7 @@ import (
 	delivery "pinset/internal/app/delivery/http"
 	"pinset/internal/app/models"
 	"pinset/internal/app/models/request"
+	"pinset/internal/app/models/response"
 	"time"
 
 	internal_errors "pinset/internal/errors"
@@ -231,4 +232,44 @@ func (uuc *UserUsecaseController) GetUserInfo(user *models.User, currUserID uint
 	}
 
 	return userProfile, nil
+}
+
+func (uuc *UserUsecaseController) GetUserInfoPublic(userID uint64) (*response.UserProfileResponse, error) {
+	return uuc.repo.GetUserInfoPublic(userID)
+}
+
+func (uuc *UserUsecaseController) GetUsersByParams(userParams *models.UserSearchParams) ([]*models.UserInfo, error) {
+	return uuc.repo.GetUsersByParams(userParams)
+}
+
+func (uuc *UserUsecaseController) GetCompanionsForUser(userID uint64, userParams *models.UserSearchParams) ([]*models.UserInfo, error) {
+	userChats, err := uuc.mediaRepo.GetUserChats(userID)
+	if err != nil {
+		return nil, err
+	}
+	prohibitedUsers := make(map[uint64]bool)
+	prohibitedUsers[userID] = true
+
+	for _, chatID := range userChats {
+		chatUsers, err := uuc.mediaRepo.GetChatUsers(chatID)
+		if err != nil {
+			return nil, err
+		}
+		for _, user := range chatUsers {
+			if _, ok := prohibitedUsers[user]; !ok {
+				prohibitedUsers[user] = true
+			}
+		}
+	}
+	foundUsers, err := uuc.GetUsersByParams(userParams)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*models.UserInfo, 0)
+	for _, foundUser := range foundUsers {
+		if _, ok := prohibitedUsers[foundUser.UserID]; !ok {
+			res = append(res, foundUser)
+		}
+	}
+	return res, nil
 }

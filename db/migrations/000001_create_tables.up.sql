@@ -130,6 +130,34 @@ CREATE TABLE IF NOT EXISTS bookmark (
     bookmark_time TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Chat table:
+-- Таблица чатов, которые существуют на данный момент.
+
+CREATE TABLE IF NOT EXISTS chat (
+    chat_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+);
+
+-- Message table:
+-- Таблица всех сообщений между пользователями в чатах.
+
+CREATE TABLE IF NOT EXISTS msg (
+    message_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, 
+    author_id INT REFERENCES "user" (user_id) ON DELETE CASCADE NOT NULL,
+    chat_id INT REFERENCES chat (chat_id) ON DELETE CASCADE NOT NULL, 
+    content TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL
+);
+
+-- User Chat table:
+-- Таблица-соответствие юзеров и чатов.
+
+CREATE TABLE IF NOT EXISTS user_chat (
+    user_id INT REFERENCES "user" (user_id) ON DELETE CASCADE NOT NULL, 
+    chat_id INT REFERENCES chat (chat_id) ON DELETE CASCADE NOT NULL,
+    PRIMARY KEY (user_id, chat_id)
+);
+
+
 -- Saved pin to board table:
 -- Таблица-хранилище соответствия досок-сохраненных пинов.
 CREATE TABLE IF NOT EXISTS saved_pin_to_board (

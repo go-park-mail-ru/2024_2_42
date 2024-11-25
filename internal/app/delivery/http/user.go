@@ -253,3 +253,40 @@ func (udc *UserDeliveryController) GetAvatar(w http.ResponseWriter, r *http.Requ
 		AvatarUrl: userAvatar,
 	})
 }
+
+func (udc *UserDeliveryController) GetUsersByParams(w http.ResponseWriter, r *http.Request) {
+
+	currUserID, ok := r.Context().Value(configs.UserIdKey).(uint64)
+	if !ok {
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
+			Internal: internal_errors.ErrUserIsNotRegistered,
+		})
+		return
+	}
+
+	var userParams *models.UserSearchParams
+	err := json.NewDecoder(r.Body).Decode(&userParams)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInvalidOrMissingRequestBody,
+		})
+		return
+	}
+
+	res, err := udc.Usecase.GetCompanionsForUser(currUserID, userParams)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInternalServerError,
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
+			General: err, Internal: internal_errors.ErrInternalServerError,
+		})
+		return
+	}
+}

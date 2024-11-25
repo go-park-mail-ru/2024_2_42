@@ -39,6 +39,20 @@ type UserPin struct {
 	SubscriptionsCount uint64  `json:"subscriptions_count"`
 }
 
+type UserSearchParams struct {
+	NickName *string `json:"nick_name"`
+	Email    *string `json:"email"`
+	UserName *string `json:"user_name"`
+	Gender   *string `json:"gender"`
+}
+
+type UserInfo struct {
+	UserID    uint64  `json:"user_id"`
+	UserName  *string `json:"user_name"`
+	NickName  string  `json:"nick_name"`
+	AvatarUrl *string `json:"avatar_url"`
+}
+
 type UserProfile struct {
 	UserName           *string    `json:"user_name"`
 	NickName           string     `json:"nick_name"`
@@ -68,6 +82,7 @@ func (u *User) Sanitize() {
 	u.Email = html.EscapeString(u.Email)
 	u.Password = html.EscapeString(u.Password)
 	u.Gender = html.EscapeString(u.Email)
+	// u.AvatarUrl = html.EscapeString(u.AvatarUrl)
 }
 
 func (u User) Valid() error {
