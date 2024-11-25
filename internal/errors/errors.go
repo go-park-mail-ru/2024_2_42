@@ -67,8 +67,9 @@ var (
 	ErrBadBoardInputData = errors.New("передана некорректная информация о доске")
 	ErrBadBoardID        = errors.New("id доски не соответствует текущему")
 
-	ErrBookmarkDoesntExists = errors.New("закладка не существует")
-	ErrBadBookmarkInputData = errors.New("передана некорректная информация о закладке")
+	ErrBookmarkDoesntExists  = errors.New("закладка не существует")
+	ErrBookmarkAlreadyExists = errors.New("закладка уже существует")
+	ErrBadBookmarkInputData  = errors.New("передана некорректная информация о закладке")
 )
 
 var ErrorMapping = map[error]struct {

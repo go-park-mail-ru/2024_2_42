@@ -102,8 +102,8 @@ func (udc *UserDeliveryController) LogOut(w http.ResponseWriter, r *http.Request
 }
 
 func (udc *UserDeliveryController) SignUp(w http.ResponseWriter, r *http.Request) {
-	var user models.User
-	err := json.NewDecoder(r.Body).Decode(&user)
+	var user *models.User = &models.User{}
+	err := json.NewDecoder(r.Body).Decode(user)
 	if err != nil {
 		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
 			General: err, Internal: internal_errors.ErrInvalidOrMissingRequestBody,
@@ -113,7 +113,7 @@ func (udc *UserDeliveryController) SignUp(w http.ResponseWriter, r *http.Request
 
 	user.Sanitize()
 
-	signedToken, err := udc.Usecase.SignUp(&user)
+	signedToken, err := udc.Usecase.SignUp(user)
 	if err != nil {
 		internal_errors.SendErrorResponse(w, udc.Logger, internal_errors.ErrorInfo{
 			Internal: err,
@@ -249,6 +249,7 @@ func (udc *UserDeliveryController) GetAvatar(w http.ResponseWriter, r *http.Requ
 
 	SendUserAvatarResponse(w, udc.Logger, response.UserAvatar{
 		Message:   "Succes!",
+		UserID:    currUserID,
 		AvatarUrl: userAvatar,
 	})
 }

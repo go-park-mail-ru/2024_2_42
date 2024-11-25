@@ -227,6 +227,10 @@ func (uuc *UserUsecaseController) GetUserInfo(user *models.User, currUserID uint
 	}
 	userProfile.UserBoards = UserBoards
 
+	if user.UserID == currUserID {
+		userProfile.CurrentUser = true
+	}
+
 	return userProfile, nil
 }
 

@@ -2,6 +2,7 @@ package delivery
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"mime"
 	"net/http"
@@ -23,6 +24,7 @@ const (
 	successfullGetMessage         = "file extracted"
 	successfullUploadMessage      = "file(s) successfully uploaded"
 	successfullPinCreationMessage = "pin successfully created"
+	succesfullViewedPin           = "pin succesfully viwed"
 
 	successfullUpdateMessage = "update successfull"
 
@@ -181,7 +183,7 @@ func (mdc *MediaDeliveryController) GetPinPreview(w http.ResponseWriter, r *http
 		})
 		return
 	}
-	author, err := mdc.Usecase.GetPinAuthorNameByUserID(userID)
+	author, err := mdc.Usecase.GetPinAuthorNickNameByUserID(userID)
 	if err != nil {
 		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
 			Internal: err,
@@ -190,7 +192,7 @@ func (mdc *MediaDeliveryController) GetPinPreview(w http.ResponseWriter, r *http
 	}
 
 	SendPinPreviewResponse(w, mdc.Logger, response.PinPreviewResponse{
-		AuthorName:            author.UserName,
+		AuthorName:            author.NickName,
 		AuthorAvatarUrl:       *author.AvatarUrl,
 		AuthorFollowersNumber: 0,
 		MediaUrl:              *pin.MediaUrl,
@@ -225,7 +227,7 @@ func (mdc *MediaDeliveryController) GetPinPage(w http.ResponseWriter, r *http.Re
 		})
 		return
 	}
-	author, err := mdc.Usecase.GetPinAuthorNameByUserID(userID)
+	author, err := mdc.Usecase.GetPinAuthorNickNameByUserID(userID)
 	if err != nil {
 		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
 			Internal: err,
@@ -234,14 +236,14 @@ func (mdc *MediaDeliveryController) GetPinPage(w http.ResponseWriter, r *http.Re
 	}
 
 	SendPinPageResponse(w, mdc.Logger, response.PinPageResponse{
-		AuthorName:            author.UserName,
+		AuthorName:            author.NickName,
 		AuthorAvatarUrl:       *author.AvatarUrl,
 		AuthorFollowersNumber: 0,
 		MediaUrl:              *pin.MediaUrl,
 		Title:                 *pin.Title,
 		Description:           *pin.Description,
 		RelatedLink:           *pin.RelatedLink,
-		Geolocation:           pin.Geolocation,
+		Geolocation:           *pin.Geolocation,
 		CreationTime:          pin.CreationTime,
 	})
 }
@@ -340,7 +342,7 @@ func (mdc *MediaDeliveryController) UpdatePin(w http.ResponseWriter, r *http.Req
 			Description: &req.Description,
 			RelatedLink: &req.RelatedLink,
 			BoardID:     req.BoardID,
-			Geolocation: req.Geolocation,
+			Geolocation: &req.Geolocation,
 			MediaUrl:    &lastUploadedMediaUrl,
 		})
 
@@ -423,7 +425,7 @@ func (mdc *MediaDeliveryController) CreateBookmark(w http.ResponseWriter, r *htt
 	}
 
 	err = mdc.Usecase.CreatePinBookmark(&bookmark)
-	if err != nil {
+	if err != nil && !errors.Is(err, internal_errors.ErrBookmarkDoesntExists) {
 		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
 			Internal: err,
 		})
@@ -436,16 +438,16 @@ func (mdc *MediaDeliveryController) CreateBookmark(w http.ResponseWriter, r *htt
 }
 
 func (mdc *MediaDeliveryController) DeleteBookmark(w http.ResponseWriter, r *http.Request) {
-	bookmarkIDStr := mux.Vars(r)["bookmark_id"]
-	bookmarkID, err := strconv.ParseUint(bookmarkIDStr, 10, 64)
+	var bookmark models.Bookmark
+	err := json.NewDecoder(r.Body).Decode(&bookmark)
 	if err != nil {
 		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
-			Internal: err,
+			General: err, Internal: internal_errors.ErrInvalidOrMissingRequestBody,
 		})
 		return
 	}
 
-	err = mdc.Usecase.DeletePinBookmarkByBookmarkID(bookmarkID)
+	err = mdc.Usecase.DeletePinBookmarkByOwnerIDAndPinID(bookmark)
 	if err != nil {
 		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
 			Internal: err,
@@ -455,6 +457,31 @@ func (mdc *MediaDeliveryController) DeleteBookmark(w http.ResponseWriter, r *htt
 
 	SendInfoResponse(w, mdc.Logger, response.ResponseInfo{
 		Message: successfullBookmarkDeletionMessage,
+	})
+}
+
+func (mdc *MediaDeliveryController) ViewPin(w http.ResponseWriter, r *http.Request) {
+	pinIDStr := mux.Vars(r)["pin_id"]
+	pinID, err := strconv.ParseUint(pinIDStr, 10, 64)
+
+	fmt.Println("ViewPin", err)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+
+	err = mdc.Usecase.UpdatePinViewsNumber(pinID)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+
+	SendInfoResponse(w, mdc.Logger, response.ResponseInfo{
+		Message: succesfullViewedPin,
 	})
 }
 
@@ -642,5 +669,38 @@ func (mdc *MediaDeliveryController) DeleteBoard(w http.ResponseWriter, r *http.R
 
 	SendInfoResponse(w, mdc.Logger, response.ResponseInfo{
 		Message: successfullBoardDeletion,
+	})
+}
+
+func (mdc *MediaDeliveryController) DeletePinFromBoard(w http.ResponseWriter, r *http.Request) {
+	boardIDStr := mux.Vars(r)["board_id"]
+	pinIDStr := mux.Vars(r)["pin_id"]
+
+	boardID, err := strconv.ParseUint(boardIDStr, 10, 64)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+
+	pinID, err := strconv.ParseUint(pinIDStr, 10, 64)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+
+	err = mdc.Usecase.DeletePinFromBoard(boardID, pinID)
+	if err != nil {
+		internal_errors.SendErrorResponse(w, mdc.Logger, internal_errors.ErrorInfo{
+			Internal: err,
+		})
+		return
+	}
+
+	SendInfoResponse(w, mdc.Logger, response.ResponseInfo{
+		Message: successfullUpdateMessage,
 	})
 }

@@ -65,7 +65,6 @@ func (urc *UserRepositoryController) CheckUserByEmail(user *models.User) (bool, 
 	if err != nil && err != sql.ErrNoRows {
 		return foundEmail.Valid, internal_errors.ErrUserDoesntExists
 	}
-
 	return foundEmail.Valid, nil
 }
 

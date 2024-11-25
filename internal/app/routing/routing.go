@@ -46,6 +46,7 @@ type (
 		CreatePin(w http.ResponseWriter, r *http.Request)
 		UpdatePin(w http.ResponseWriter, r *http.Request)
 		DeletePin(w http.ResponseWriter, r *http.Request)
+		ViewPin(w http.ResponseWriter, r *http.Request)
 
 		GetUserBoards(w http.ResponseWriter, r *http.Request)
 		GetBoard(w http.ResponseWriter, r *http.Request)
@@ -53,6 +54,7 @@ type (
 		UpdateBoard(w http.ResponseWriter, r *http.Request)
 		DeleteBoard(w http.ResponseWriter, r *http.Request)
 		AddPinToBoard(w http.ResponseWriter, r *http.Request)
+		DeletePinFromBoard(w http.ResponseWriter, r *http.Request)
 		GetBoardPins(w http.ResponseWriter, r *http.Request)
 
 		GetBookmark(w http.ResponseWriter, r *http.Request)
@@ -121,6 +123,7 @@ func InitializeMediaLayerRoutings(rh *RoutingHandler, mediaHandlers MediaDeliver
 	rh.mux.HandleFunc("/feed", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.Feed)).Methods("GET")
 
 	rh.mux.HandleFunc("/create-pin", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.CreatePin)).Methods("POST")
+	rh.mux.HandleFunc("/pins/view/{pin_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.ViewPin)).Methods("POST")
 	rh.mux.HandleFunc("/pins/preview/{pin_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetPinPreview)).Methods("GET")
 	rh.mux.HandleFunc("/pins/page/{pin_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetPinPage)).Methods("GET")
 	rh.mux.HandleFunc("/pins/update/{pin_id}", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.UpdatePin)).Methods("PUT")
@@ -133,6 +136,7 @@ func InitializeMediaLayerRoutings(rh *RoutingHandler, mediaHandlers MediaDeliver
 	rh.mux.HandleFunc("/boards/delete/{board_id}", middleware.RequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.DeleteBoard)).Methods("DELETE")
 
 	rh.mux.HandleFunc("/boards/{board_id}/addpin/{pin_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.AddPinToBoard)).Methods("POST")
+	rh.mux.HandleFunc("/boards/{board_id}/deletepin/{pin_id}", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.DeletePinFromBoard)).Methods("DELETE")
 	rh.mux.HandleFunc("/boards/{board_id}/pins", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.GetBoardPins)).Methods("GET")
 
 	rh.mux.HandleFunc("/create-bookmark", middleware.NotRequiredAuthorization(rh.logger, rh.userUsecase, mediaHandlers.CreateBookmark)).Methods("POST")
@@ -182,7 +186,7 @@ func Route() {
 	userUsecase := usecase.NewUserUsecase(userRepo, mediaRepo)
 	userDelivery := NewUserDelivery(logger, userUsecase)
 
-	mediaUsecase := usecase.NewMediaUsecase(mediaRepo)
+	mediaUsecase := usecase.NewMediaUsecase(mediaRepo, userRepo)
 	mediaDelivery := NewMediaDelivery(logger, mediaUsecase)
 
 	userOnlineRepo := UserOnlineRepository.NewUserOnlineRepository()

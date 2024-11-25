@@ -44,42 +44,14 @@ func (mrc *MediaRepositoryController) GetAllPins(userID uint64) ([]*models.Pin, 
 			&pin.AuthorID,
 			&pin.MediaUrl,
 			&pin.Title,
-			&pin.Description)
+			&pin.Description,
+			&pin.Bookmarks,
+			&pin.Views)
 		if err != nil {
 			return nil, fmt.Errorf("getAllPins rows.Next: %w", err)
 		}
-		authorInfo := &models.UserPin{}
-		authorInfo.UserID = pin.AuthorID
-
-		err = mrc.db.QueryRow(GetUserInfoForPin, &pin.AuthorID).
-			Scan(&authorInfo.NickName, &authorInfo.AvatarUrl)
-		if err != nil {
-			if !errors.Is(err, sql.ErrNoRows) {
-				return nil, fmt.Errorf("getAllPins GetUserInfoForPin: %w", err)
-			}
-		}
-
-		err = mrc.db.QueryRow(userRepository.GetFollowingsCount, &pin.AuthorID).
-			Scan(&authorInfo.FollowingsCount)
-		if err != nil {
-			return nil, fmt.Errorf("getAllPins GetFollowingsCount: %w", err)
-		}
-
-		if userID != uint64(0) {
-			var availableBoards []*models.Board
-			availableBoards, err = mrc.GetAllBoardsByOwnerID(userID)
-			if err != nil {
-				return nil, fmt.Errorf("getAllPins GetAllBoardsByOwnerID: %w", err)
-			}
-			pin.Boards = availableBoards
-		}
-
-		pin.AuthorInfo = authorInfo
 
 		pins = append(pins, pin)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("getAllPins rows.Err: %w", err)
 	}
 
 	return pins, nil
@@ -102,8 +74,15 @@ func (mrc *MediaRepositoryController) GetPinPreviewInfoByPinID(pinID uint64) (*m
 func (mrc *MediaRepositoryController) GetPinPageInfoByPinID(pinID uint64) (*models.Pin, error) {
 	var pinPreviewInfo models.Pin
 
-	err := mrc.db.QueryRow(GetPinPageInfoByPinID, pinID).Scan(&pinPreviewInfo.PinID, &pinPreviewInfo.AuthorID, &pinPreviewInfo.Title,
-		&pinPreviewInfo.Description, &pinPreviewInfo.RelatedLink, &pinPreviewInfo.Geolocation, &pinPreviewInfo.CreationTime)
+	err := mrc.db.QueryRow(GetPinPageInfoByPinID, pinID).Scan(
+		&pinPreviewInfo.PinID,
+		&pinPreviewInfo.AuthorID,
+		&pinPreviewInfo.Title,
+		&pinPreviewInfo.Description,
+		&pinPreviewInfo.RelatedLink,
+		&pinPreviewInfo.MediaUrl,
+		&pinPreviewInfo.Geolocation,
+		&pinPreviewInfo.CreationTime)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, internal_errors.ErrPinDoesntExists
@@ -111,17 +90,36 @@ func (mrc *MediaRepositoryController) GetPinPageInfoByPinID(pinID uint64) (*mode
 		return nil, fmt.Errorf("psql getPinPageInfoByPinID: %w", err)
 	}
 
+	authorInfo := &models.UserPin{}
+	authorInfo.UserID = pinPreviewInfo.AuthorID
+
+	err = mrc.db.QueryRow(GetUserInfoForPin, &pinPreviewInfo.AuthorID).
+		Scan(&authorInfo.NickName, &authorInfo.AvatarUrl)
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("getAllPins GetUserInfoForPin: %w", err)
+		}
+	}
+
+	err = mrc.db.QueryRow(userRepository.GetFollowingsCount, &pinPreviewInfo.AuthorID).
+		Scan(&authorInfo.FollowingsCount)
+	if err != nil {
+		return nil, fmt.Errorf("getAllPins GetFollowingsCount: %w", err)
+	}
+
+	pinPreviewInfo.AuthorInfo = authorInfo
+
 	return &pinPreviewInfo, nil
 }
 
-func (mrc *MediaRepositoryController) GetPinAuthorNameByUserID(userID uint64) (*models.User, error) {
-	var author models.User
-	err := mrc.db.QueryRow(GetPinAuthorByUserID, userID).Scan(&author.UserName, &author.AvatarUrl)
+func (mrc *MediaRepositoryController) GetPinAuthorNickNameByUserID(userID uint64) (*models.UserPin, error) {
+	var author models.UserPin
+	err := mrc.db.QueryRow(GetPinAuthorByUserID, userID).Scan(&author.NickName, &author.AvatarUrl)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, internal_errors.ErrBadUserID
 		}
-		return nil, fmt.Errorf("psql getPinAuthorNameByUserID: %w", err)
+		return nil, fmt.Errorf("psql getPinAuthorNickNameByUserID: %w", err)
 	}
 
 	return &author, nil
@@ -247,12 +245,28 @@ func (mrc *MediaRepositoryController) CreatePinBookmark(bookmark *models.Bookmar
 	return nil
 }
 
-func (mrc *MediaRepositoryController) DeletePinBookmarkByBookmarkID(bookmarkID uint64) error {
-	_, err := mrc.db.Exec(DeletePinBookmarkByBookmarkID, bookmarkID)
+func (mrc *MediaRepositoryController) DeletePinBookmarkByOwnerIDAndPinID(bookmark models.Bookmark) error {
+	_, err := mrc.db.Exec(DeletePinBookmarkByOwnerIDAndPinID, bookmark.OwnerID, bookmark.PinID)
 	if err != nil {
 		return internal_errors.ErrBookmarkDoesntExists
 	}
 
-	mrc.logger.WithField("bookmark was succesfully deleted with bookmarkID", bookmarkID).Info()
+	mrc.logger.WithField("bookmark was succesfully deleted with ownerID", bookmark.OwnerID).Info()
+	return nil
+}
+
+func (mrc *MediaRepositoryController) UpdateBookmarksCountIncrease(pinID uint64) error {
+	_, err := mrc.db.Exec(UpdateBookmarksCountIncrease, pinID)
+	if err != nil {
+		return internal_errors.ErrPinDoesntExists
+	}
+	return nil
+}
+
+func (mrc *MediaRepositoryController) UpdateBookmarksCountDecrease(pinID uint64) error {
+	_, err := mrc.db.Exec(UpdateBookmarksCountDecrease, pinID)
+	if err != nil {
+		return internal_errors.ErrPinDoesntExists
+	}
 	return nil
 }
