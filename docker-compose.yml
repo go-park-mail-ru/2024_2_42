@@ -10,6 +10,17 @@ services:
       - ./logs:/docker-42/logs/
     env_file:
       - .env
+  mailer:
+    container_name: mailerService
+    build:
+      context: .
+      dockerfile: ./mailer-service/Dockerfile
+    ports:
+      - '50051:50051'
+    volumes:
+      - ./logs:/docker-42/logs/
+    env_file:
+      - .env
   db:
     image: postgres:17.0
     ports:
@@ -19,10 +30,10 @@ services:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - DATABASE_HOST=${DB_HOST}
-    volumes:  
+    volumes:
       - .:/docker-entrypoint-initdb.d/
     healthcheck:
-      test: "pg_isready --username=postgres && psql --username=postgres --list" 
+      test: 'pg_isready --username=postgres && psql --username=postgres --list'
       timeout: 10s
       retries: 20
       start_period: 10s
@@ -36,8 +47,8 @@ services:
     container_name: minioService
     image: minio/minio
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - '9000:9000'
+      - '9001:9001'
     volumes:
       - minio_storage:/data
     environment:

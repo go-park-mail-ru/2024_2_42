@@ -1,4 +1,4 @@
-package UserOnlineRepository
+package user_online_repository
 
 import (
 	"pinset/internal/app/models"
@@ -11,7 +11,7 @@ type UserOnlineRepositoryController struct {
 	data map[uint64]*models.ChatUser
 }
 
-func NewUserOnlineRepository() usecase.UserOnlineRepo {
+func NewUserOnlineRepositoryController() usecase.UserOnlineRepo {
 	return &UserOnlineRepositoryController{
 		mu:   &sync.RWMutex{},
 		data: make(map[uint64]*models.ChatUser),

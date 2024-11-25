@@ -86,7 +86,6 @@ func (urc *UserRepositoryController) CheckUserCredentials(user *models.User) err
 }
 
 func (urc *UserRepositoryController) GetUsersByParams(userParams *models.UserSearchParams) ([]*models.UserInfo, error) {
-	fmt.Println("YESYESYES")
 	queryString := `SELECT user_id, user_name, nick_name, avatar_url FROM "user" WHERE `
 	conditions := make([]string, 0)
 	params := make([]interface{}, 0)

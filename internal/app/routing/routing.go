@@ -9,7 +9,7 @@ import (
 	delivery "pinset/internal/app/delivery/http"
 	"pinset/internal/app/middleware"
 	mediarepository "pinset/internal/app/repository/media_repository"
-	UserOnlineRepository "pinset/internal/app/repository/user_online_repository"
+	UserOnlineRepository "pinset/internal/app/repository/user-online-repository"
 	userRepository "pinset/internal/app/repository/user_repository"
 	"pinset/internal/app/usecase"
 
@@ -189,7 +189,7 @@ func Route() {
 	mediaUsecase := usecase.NewMediaUsecase(mediaRepo)
 	mediaDelivery := NewMediaDelivery(logger, mediaUsecase)
 
-	userOnlineRepo := UserOnlineRepository.NewUserOnlineRepository()
+	userOnlineRepo := UserOnlineRepository.NewUserOnlineRepositoryController()
 	messageUsecase := usecase.NewMessageUsecase(userOnlineRepo, mediaRepo, userRepo)
 	messageDelivery := NewMessageDelivery(logger, messageUsecase)
 
