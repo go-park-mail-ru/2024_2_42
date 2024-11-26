@@ -8,6 +8,7 @@ import (
 	"pinset/configs/s3"
 	"pinset/internal/app/models"
 	"pinset/internal/app/usecase"
+	"pinset/mailer-service/mailer"
 
 	"github.com/google/uuid"
 	"github.com/minio/minio-go"
@@ -35,12 +36,13 @@ type MediaRepositoryController struct {
 	db              *sql.DB
 	logger          *logrus.Logger
 	client          *minio.Client
+	mailerManager   mailer.ChatServiceClient
 	ImageBucketName string
 	VideoBucketName string
 	AudioBucketName string
 }
 
-func NewMediaRepository(db *sql.DB, logger *logrus.Logger) (usecase.MediaRepository, error) {
+func NewMediaRepository(db *sql.DB, logger *logrus.Logger, manager mailer.ChatServiceClient) (usecase.MediaRepository, error) {
 	config := s3.NewMinioParams()
 	client, err := NewMinioClient(config)
 	if err != nil {
@@ -52,6 +54,7 @@ func NewMediaRepository(db *sql.DB, logger *logrus.Logger) (usecase.MediaReposit
 		db:              db,
 		logger:          logger,
 		client:          client,
+		mailerManager:   manager,
 		ImageBucketName: config.ImageBucketName,
 		VideoBucketName: config.VideoBucketName,
 		AudioBucketName: config.AudioBucketName,

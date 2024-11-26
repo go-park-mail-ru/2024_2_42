@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"pinset/configs"
+	"pinset/mailer-service/mailer"
 
 	"pinset/internal/app/db"
 	delivery "pinset/internal/app/delivery/http"
@@ -18,6 +19,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Controller struct {
@@ -177,7 +180,16 @@ func Route() {
 	mux := mux.NewRouter()
 
 	repo := db.InitDB(logger)
-	mediaRepo, mediaErr := mediarepository.NewMediaRepository(repo, logger)
+
+	grpcConn, err := grpc.NewClient("mailerService:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer grpcConn.Close()
+
+	mailerManager := mailer.NewChatServiceClient(grpcConn)
+
+	mediaRepo, mediaErr := mediarepository.NewMediaRepository(repo, logger, mailerManager)
 	if mediaErr != nil {
 		logger.Fatal(mediaErr)
 	}
@@ -207,4 +219,5 @@ func Route() {
 
 	logger.WithField("starting server at ", routerParams.MainServerPort).Info()
 	logger.Fatal(server.ListenAndServe())
+
 }

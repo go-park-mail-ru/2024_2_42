@@ -1,148 +1,144 @@
 package mediarepository
 
 import (
+	"context"
 	"fmt"
 	"pinset/internal/app/models"
+	"pinset/internal/app/models/response"
+	"pinset/mailer-service/mailer"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (mrc *MediaRepositoryController) CreateMessage(msg *models.Message) (*models.MessageCreateInfo, error) {
-	crMsg := &models.MessageCreateInfo{}
-	err := mrc.db.QueryRow(`INSERT INTO msg (author_id, chat_id, content, created_at) VALUES ($1, $2, $3, $4) 
-	RETURNING message_id, author_id, chat_id, content, created_at`,
-		msg.SenderID, msg.ChatID, msg.Content, msg.CreatedAt).Scan(&crMsg.ID, &crMsg.SenderID, &crMsg.ChatID, &crMsg.Content, &crMsg.CreatedAt)
 
-	if err != nil {
-		return nil, fmt.Errorf("psql CreateMessage: %w", err)
+	req := &mailer.Message{
+		SenderId:  msg.SenderID,
+		ChatId:    msg.ChatID,
+		Content:   msg.Content,
+		CreatedAt: timestamppb.New(msg.CreatedAt),
 	}
 
+	res, err := mrc.mailerManager.AddChatMessage(context.Background(), req)
+	if err != nil {
+		return nil, fmt.Errorf("gRPC CreateMessage: %w", err)
+	}
+
+	crMsg := &models.MessageCreateInfo{
+		ID:        res.Id,
+		SenderID:  res.SenderId,
+		ChatID:    res.ChatId,
+		Content:   res.Content,
+		CreatedAt: res.CreatedAt.AsTime(),
+	}
 	mrc.logger.WithField("message was succesfully created with messageID", crMsg.ID).Info("createMessage func")
 	return crMsg, nil
 }
 
-func (mrc *MediaRepositoryController) DeleteMessage(messageID uint64) error {
-	_, err := mrc.db.Exec(`DELETE FROM msg WHERE message_id=$1`, messageID)
-
-	if err != nil {
-		return fmt.Errorf("psql DeleteMessage: %w", err)
-	}
-
-	mrc.logger.WithField("message was successfully deleted with messageID", messageID).Info("deleteMessage func")
-	return nil
-}
-
-func (mrc *MediaRepositoryController) UpdateMessage(msg *models.MessageUpdate) error {
-	_, err := mrc.db.Exec(`UPDATE msg SET content=$1 WHERE message_id=$2`, msg.Content, msg.ID)
-
-	if err != nil {
-		return fmt.Errorf("psql UpdateMessage: %w", err)
-	}
-
-	mrc.logger.WithField("message was successfully updated with messageID", msg.ID).Info("updateMessage func")
-	return nil
-
-}
-
 func (mrc *MediaRepositoryController) GetChatMessages(chatID uint64) ([]*models.MessageInfo, error) {
-	rows, err := mrc.db.Query(`SELECT message_id, chat_id, author_id, content, created_at FROM msg WHERE chat_id=$1`, chatID)
-	if err != nil {
-		return nil, fmt.Errorf("getChatMessages: %w", err)
+	req := &mailer.ChatRequest{
+		ChatId: chatID,
 	}
-	defer rows.Close()
+	res, err := mrc.mailerManager.GetAllChatMessages(context.Background(), req)
 
-	var messageList []*models.MessageInfo
-	for rows.Next() {
-		message := &models.MessageInfo{}
-		if err := rows.Scan(&message.ID,
-			&message.ChatID,
-			&message.SenderID,
-			&message.Content,
-			&message.CreatedAt); err != nil {
-			return nil, fmt.Errorf("getChatMessages rows.Next: %w", err)
-		}
-		messageList = append(messageList, message)
+	if err != nil {
+		return nil, fmt.Errorf("gRPC GetChatMessages: %w", err)
 	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("getChatMessages rows.Err: %w", err)
+	messageList := make([]*models.MessageInfo, 0)
+	for _, message := range res.Messages {
+		messageList = append(messageList, &models.MessageInfo{
+			ID:        message.Id,
+			SenderID:  message.SenderId,
+			ChatID:    message.ChatId,
+			Content:   message.Content,
+			CreatedAt: message.CreatedAt.AsTime(),
+		})
 	}
 	return messageList, nil
 }
 
-func (mrc *MediaRepositoryController) CreateChat() (*models.ChatCreateInfo, error) {
-	var chatID uint64
-	err := mrc.db.QueryRow(`INSERT INTO chat DEFAULT VALUES RETURNING chat_id`).Scan(&chatID)
+func (mrc *MediaRepositoryController) CreateChat(req *models.ChatCreateRequest) (*models.ChatInfo, error) {
 
-	if err != nil {
-		return nil, fmt.Errorf("psql CreateChat: %w", err)
+	mailerRequest := &mailer.ChatCreateRequest{
+		UserId:      req.UserID,
+		CompanionId: req.CompanionID,
 	}
 
-	mrc.logger.WithField("chat was succesfully created with chatID", chatID).Info("createChat func")
-	return &models.ChatCreateInfo{ID: chatID}, nil
-}
-
-func (mrc *MediaRepositoryController) AddUserToChat(chatID uint64, userID uint64) error {
-	var createdChatID, createdUserID uint64
-	err := mrc.db.QueryRow(`INSERT INTO user_chat (user_id, chat_id) VALUES ($1, $2)
-	 RETURNING user_id, chat_id`, userID, chatID).Scan(&createdUserID, &createdChatID)
-
+	res, err := mrc.mailerManager.CreateChat(context.Background(), mailerRequest)
 	if err != nil {
-		return fmt.Errorf("psql AddUserToChat: %w", err)
+		return nil, fmt.Errorf("gRPC CreateChat: %w", err)
 	}
-	mrc.logger.WithField("user successfully added to chat", createdUserID).Info("addUserToChat func")
-	return nil
+	timeBirth := res.Companion.BirthTime.AsTime()
+	companion := &response.UserProfileResponse{
+		UserName:    res.Companion.UserName.Value,
+		NickName:    res.Companion.NickName,
+		Description: &res.Companion.Description.Value,
+		BirthTime:   &timeBirth,
+		Gender:      &res.Companion.Gender.Value,
+		AvatarUrl:   &res.Companion.AvatarUrl.Value,
+	}
+
+	chatInfo := &models.ChatInfo{ChatID: res.ChatId, Companion: *companion}
+
+	mrc.logger.WithField("chat was succesfully created with chatID", res.ChatId).Info("createChat func")
+	return chatInfo, nil
 }
 
 func (mrc *MediaRepositoryController) GetChatUsers(chatID uint64) ([]uint64, error) {
-	rows, err := mrc.db.Query(`SELECT user_id FROM user_chat WHERE chat_id=$1`, chatID)
 
+	mailerRequest := &mailer.ChatRequest{
+		ChatId: chatID,
+	}
+
+	res, err := mrc.mailerManager.GetChatUsers(context.Background(), mailerRequest)
 	if err != nil {
-		return nil, fmt.Errorf("psql GetChatUsers %w", err)
+		return nil, fmt.Errorf("gRPC GetChatUsers: %w", err)
 	}
-	defer rows.Close()
 
-	userIDs := make([]uint64, 0)
-	for rows.Next() {
-		var userID uint64
-		if err := rows.Scan(&userID); err != nil {
-			return nil, fmt.Errorf("psql GetChatUsers rows.Next: %w", err)
-		}
-		userIDs = append(userIDs, userID)
+	userList := make([]uint64, 0)
+	for _, user := range res.Users {
+		userList = append(userList, user.Id)
 	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("GetChatUsers rows.Err: %w", err)
-	}
-	return userIDs, nil
+
+	return userList, nil
 }
 
-func (mrc *MediaRepositoryController) GetUserChats(userID uint64) ([]uint64, error) {
-	rows, err := mrc.db.Query(`SELECT chat_id FROM user_chat WHERE user_id=$1`, userID)
+func (mrc *MediaRepositoryController) GetUserChats(userID uint64) ([]*models.ChatInfo, error) {
 
-	if err != nil {
-		return nil, fmt.Errorf("psql GetUserChats %w", err)
+	mailerUser := &mailer.User{
+		Id: userID,
 	}
-	defer rows.Close()
 
-	chatIDs := make([]uint64, 0)
-	for rows.Next() {
-		var chatID uint64
-		if err := rows.Scan(&chatID); err != nil {
-			return nil, fmt.Errorf("psql GetUserChats rows.Next: %w", err)
+	res, err := mrc.mailerManager.GetUserChats(context.Background(), mailerUser)
+	if err != nil {
+		return nil, fmt.Errorf("gRPC GetChatUsers: %w", err)
+	}
+	fmt.Println("userchats in Method", res)
+
+	chatList := make([]*models.ChatInfo, 0)
+	for _, chat := range res.Chats {
+		companion := &response.UserProfileResponse{
+			UserName: chat.Companion.UserName.Value,
+			NickName: chat.Companion.NickName,
 		}
-		chatIDs = append(chatIDs, chatID)
+		if chat.Companion.UserName != nil {
+			companion.UserName = chat.Companion.UserName.Value
+		}
+		birthTime := chat.Companion.BirthTime.AsTime()
+		if chat.Companion.BirthTime != nil {
+			companion.BirthTime = &birthTime
+		}
+		if chat.Companion.Gender != nil {
+			companion.Gender = &chat.Companion.Gender.Value
+		}
+		if chat.Companion.AvatarUrl != nil {
+			companion.AvatarUrl = &chat.Companion.AvatarUrl.Value
+		}
+		chatList = append(chatList, &models.ChatInfo{
+			ChatID:    chat.ChatId,
+			Companion: *companion,
+		})
 	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("GetUserChats rows.Err: %w", err)
-	}
-	fmt.Println("repository chat IDs", chatIDs)
-	return chatIDs, nil
-}
-
-func (mrc *MediaRepositoryController) DeleteChat(chatID uint64) error {
-	_, err := mrc.db.Exec(`DELETE FROM chat WHERE chat_id=$1`, chatID)
-
-	if err != nil {
-		return fmt.Errorf("psql DeleteChat: %w", err)
-	}
-
-	mrc.logger.WithField("chat with was successfully deleted with chatID", chatID).Info("deleteChat func")
-	return nil
+	fmt.Println("chatList", chatList)
+	return chatList, nil
 }

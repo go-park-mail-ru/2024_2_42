@@ -3,12 +3,14 @@ package repository
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"pinset/mailer-service/mailer"
 	"pinset/mailer-service/models"
 	"pinset/mailer-service/usecase"
 
 	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type MessageRepositoryController struct {
@@ -25,9 +27,13 @@ func NewMessageRepositoryController(db *sql.DB, logger *logrus.Logger) usecase.M
 
 func (mrc *MessageRepositoryController) AddChatMessage(msg *mailer.Message) (*mailer.MessageInfo, error) {
 	crMsg := &mailer.MessageInfo{}
+	createdAt := time.Now()
+	if msg.CreatedAt != nil {
+		createdAt = msg.CreatedAt.AsTime() // Получаем time.Time из Protobuf
+	}
 	err := mrc.db.QueryRow(`INSERT INTO msg (author_id, chat_id, content, created_at) VALUES ($1, $2, $3, $4) 
 	RETURNING message_id, author_id, chat_id, content, created_at`,
-		msg.SenderId, msg.ChatId, msg.Content, msg.CreatedAt).Scan(&crMsg.Id, &crMsg.SenderId, &crMsg.ChatId, &crMsg.Content, &crMsg.CreatedAt)
+		msg.SenderId, msg.ChatId, msg.Content, createdAt).Scan(&crMsg.Id, &crMsg.SenderId, &crMsg.ChatId, &crMsg.Content, &crMsg.CreatedAt)
 
 	if err != nil {
 		return nil, fmt.Errorf("psql CreateMessage: %w", err)
@@ -70,13 +76,15 @@ func (mrc *MessageRepositoryController) GetChatMessages(chatID uint64) ([]*maile
 	var messageList []*mailer.MessageInfo
 	for rows.Next() {
 		message := &mailer.MessageInfo{}
+		var createdAt time.Time
 		if err := rows.Scan(&message.Id,
 			&message.ChatId,
 			&message.SenderId,
 			&message.Content,
-			&message.CreatedAt); err != nil {
+			&createdAt); err != nil {
 			return nil, fmt.Errorf("getChatMessages rows.Next: %w", err)
 		}
+		message.CreatedAt = timestamppb.New(createdAt)
 		messageList = append(messageList, message)
 	}
 	if err := rows.Err(); err != nil {

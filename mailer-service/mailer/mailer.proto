@@ -4,16 +4,15 @@ option go_package = "./;mailer";
 package mailer;
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 
 message UserProfileResponse {
-    string user_name = 1;
+    google.protobuf.StringValue user_name = 1;
     string nick_name = 2;
-    string description = 3;
+    google.protobuf.StringValue description = 3;
     google.protobuf.Timestamp birth_time = 4;
-    string gender = 5;
-    string avatar_url = 6;
-    uint64 number_of_user_followings = 7;
-    uint64 number_of_user_subscriptions = 8;
+    google.protobuf.StringValue gender = 5;
+    google.protobuf.StringValue avatar_url = 6;
 }
 
 message MessageInfo {

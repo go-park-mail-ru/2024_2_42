@@ -38,7 +38,7 @@ func (muc *MessageUsecaseController) CreateChat(req *mailer.ChatCreateRequest) (
 	if err != nil {
 		return nil, err
 	}
-	companionInfo, err := muc.userRepo.GetUserInfoPublic(req.UserId)
+	companionInfo, err := muc.userRepo.GetUserInfoPublic(req.CompanionId)
 	if err != nil {
 		return nil, err
 	}

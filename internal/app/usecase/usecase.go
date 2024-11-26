@@ -66,16 +66,11 @@ type (
 		HasCorrectContentType(string) bool
 		UploadMedia(string, string, io.Reader, int64) (string, error)
 
-		CreateChat() (*models.ChatCreateInfo, error)
-		AddUserToChat(chatID uint64, userID uint64) error
-		GetChatUsers(chatID uint64) ([]uint64, error)
-		GetUserChats(userID uint64) ([]uint64, error)
-		DeleteChat(chatID uint64) error
-
 		CreateMessage(msg *models.Message) (*models.MessageCreateInfo, error)
-		DeleteMessage(messageID uint64) error
-		UpdateMessage(msg *models.MessageUpdate) error
 		GetChatMessages(chatID uint64) ([]*models.MessageInfo, error)
+		CreateChat(req *models.ChatCreateRequest) (*models.ChatInfo, error)
+		GetChatUsers(chatID uint64) ([]uint64, error)
+		GetUserChats(userID uint64) ([]*models.ChatInfo, error)
 
 		GetSurvey(surveyID uint64) (*models.Survey, error)
 		GetSurveyQuestions(surveyID uint64) ([]*models.Question, error)

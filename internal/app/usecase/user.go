@@ -246,8 +246,8 @@ func (uuc *UserUsecaseController) GetCompanionsForUser(userID uint64, userParams
 	prohibitedUsers := make(map[uint64]bool)
 	prohibitedUsers[userID] = true
 
-	for _, chatID := range userChats {
-		chatUsers, err := uuc.mediaRepo.GetChatUsers(chatID)
+	for _, chat := range userChats {
+		chatUsers, err := uuc.mediaRepo.GetChatUsers(chat.ChatID)
 		if err != nil {
 			return nil, err
 		}
